@@ -1,0 +1,32 @@
+html, body{
+	background-color: #3bb7ff;
+	color: #FFFFFF;
+}
+h1, h2, h3 {
+	text-align: center;
+}
+a.disable{
+	pointer-events: none;
+	cursor: default;
+}
+
+/* Represents all span tags where its innerText should be replaced with a team number*/
+.current_team_number{ }
+.current_team_name{ }
+.current_team_website_link{ }
+.current_team_website_label{ }
+.current_team_location{ }
+
+.input_div{
+	width: 100%;
+	text-align:center;
+}
+
+#team_number_input{
+	width: 200px;
+	height: 80px;
+	background-color: rgba(100%, 100%, 100%, .2);
+	font-size: 60px;
+	text-align: center;
+	color: #ff5238;
+}
