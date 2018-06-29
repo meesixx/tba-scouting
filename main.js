@@ -6,6 +6,12 @@
 const API_URL = "https://www.thebluealliance.com/api/v3";
 
 
+function prettyPercent(percent){
+	return "" + (Math.round(percent * 1000) / 10.0) + "%";
+}
+function prettyDecimal(decimal){
+	return (Math.round(decimal * 10) / 10) + "";
+}
 
 function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
 	if(!subUrl){
@@ -121,6 +127,18 @@ function setIDText(id, text){
 	}
 	element.innerText = text;
 }
+function setIDHTML(id, html){
+	if(id === undefined || html === undefined) throw "You must pass both id, and text.";
+
+	if(html === null){
+		html = "?";
+	}
+	let element = document.getElementById(id);
+	if(element === null){
+		throw "Element with id: '" + id + "' not found.";
+	}
+	element.innerHTML = html;
+}
 function setClassText(clazz, text){
 	if(clazz === undefined || text === undefined) throw "You must pass both id, and text.";
 
@@ -188,7 +206,7 @@ function getDesiredYear(){
 		return r;
 	}
 
-	return year;
+	return +year;
 }
 function setDesiredYear(year){
 	if(year === null || year === undefined) throw "Year cannot be null or undefined";
@@ -216,6 +234,8 @@ class RobotRanking extends Object{
 		this.countableMatches = 0; // aka breakdownable matches. Should be used with more advanced stats
 
 		this.totalMatches = matches.length; // should be used with wins losses, etc.
+		this.qualMatches = 0;
+		this.playoffMatches = 0;
 
 		this.totalWins = 0;
 		this.totalLosses = 0;
@@ -253,6 +273,11 @@ class RobotRanking extends Object{
 				teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
 			}
 			let isPlayoff = match.comp_level !== "qm";
+			if(isPlayoff){
+				this.playoffMatches++;
+			} else {
+				this.qualMatches++;
+			}
 
 			// === Wins and Losses
 			if((match.winning_alliance === "blue" && isOnBlue) || (match.winning_alliance === "red" && !isOnBlue)){
@@ -314,27 +339,31 @@ class RobotRanking extends Object{
 			}
 			// === End Wins and Losses ===
 			let robotAuto;
-			if(match.score_breakdown === null){ // 2014 and before is always like this
+			if(teamBreakdown === null){ // 2014 and before is always like this
 				robotAuto = "Unknown";
 			} else {
 				robotAuto = teamBreakdown["autoRobot" + this.getRobotNumber(match)];
 			}
-			if(robotAuto === "Unknown"){
+			if(robotAuto === "Unknown"){ // it's possible that EITHER the if OR the else sets it to this
 				this.unknownAutoRunCount++;
 			} else if(robotAuto !== "None"){
 				this.successAutoRunCount++;
 			}
-			if(match.score_breakdown !== null){
-				this.autoPointsTotal += match.score_breakdown.autoPoints;
-				this.telopPointsTotal += match.score_breakdown.teleopPoints;
-				this.totalPointsTotal += match.score_breakdown.totalPoints;
-				this.foulPointsReceivedTotal += match.score_breakdown.foulPoints;
+			if(teamBreakdown !== null){
+				this.autoPointsTotal += teamBreakdown.autoPoints;
+				this.telopPointsTotal += teamBreakdown.teleopPoints;
+				this.totalPointsTotal += teamBreakdown.totalPoints;
+				this.foulPointsReceivedTotal += teamBreakdown.foulPoints;
 
-				this.teamTechFoulCommittedTotal += match.score_breakdown.techFoulCount;
-				this.teamFoulCommittedTotal += match.score_breakdown.foulCount;
+				this.teamTechFoulCommittedTotal += teamBreakdown.techFoulCount;
+				this.teamFoulCommittedTotal += teamBreakdown.foulCount;
 			}
 		}
 	}
+	// valueOf(){
+	//
+	// }
+
 	isRobotBlue(match){
 		return match.alliances.blue.team_keys.includes(this.teamKey);
 	}
@@ -342,6 +371,29 @@ class RobotRanking extends Object{
 		let isOnBlue = this.isRobotBlue(match);
 		return 1 + (isOnBlue ? match.alliances.blue.team_keys : match.alliances.red.team_keys).indexOf(this.teamKey);
 	}
+	getTotalRecordString(){
+		return this.totalWins + "-" + this.totalLosses + "-" + this.totalTies;
+	}
+	getPlayoffRecordString(){
+		return this.playoffWins + "-" + this.playoffLosses + "-" + this.playoffTies;
+	}
+	getQualRecordString(){
+		return this.qualWins + "-" + this.qualLosses + "-" + this.qualTies;
+	}
+	getWinPercentage(){
+		return this.totalWins / this.totalMatches;
+	}
+	getQualWinPercentage(){
+		return this.qualWins / this.qualMatches;
+	}
+	getPlayoffWinPercentage(){
+		return this.playoffWins / this.playoffMatches;
+	}
+
+	getAutoSuccessPercent(){
+		return this.successAutoRunCount / (this.totalMatches - this.unknownAutoRunCount);
+	}
+
 }
 class RobotRanking2018 extends RobotRanking{
 	constructor(teamNumber, matches){
@@ -378,10 +430,10 @@ class RobotRanking2018 extends RobotRanking{
 				continue;
 			}
 			let isOnBlue = this.isRobotBlue(match);
-			let breakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
+			let teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
 
-			this.rankingPointsTotal += breakdown.rp;
-			let endgame = breakdown["endgameRobot" + this.getRobotNumber(match)];
+			this.rankingPointsTotal += teamBreakdown.rp;
+			let endgame = teamBreakdown["endgameRobot" + this.getRobotNumber(match)];
 			switch(endgame){
 				case "Climbing":
 					this.endgameClimbTotal++;
@@ -401,33 +453,81 @@ class RobotRanking2018 extends RobotRanking{
 					break;
 			}
 			let teamNumberClimbs = 0;
-			for(let i = 0; i < 3; i++){
-				let teamEndgame = breakdown["endgameRobot" + (1 + i)];
-				if(teamEndgame === "Climbing"){
-					teamNumberClimbs++;
+			if(endgame === "Climbing") { // make sure we actually climbed before seeing if we participated in a double or triple
+				for (let i = 0; i < 3; i++) {
+					let teamEndgame = teamBreakdown["endgameRobot" + (1 + i)];
+					if (teamEndgame === "Climbing") {
+						teamNumberClimbs++;
+					}
+				}
+				if(teamNumberClimbs === 2){
+					this.numberDoubleClimbs++;
+				} else if(teamNumberClimbs === 3){
+					this.numberTripleClimbs++;
 				}
 			}
-			if(teamNumberClimbs === 2){
-				this.numberDoubleClimbs++;
-			} else if(teamNumberClimbs === 3){
-				this.numberTripleClimbs++;
-			}
-			let autoSwitchSeconds = breakdown.autoSwitchOwnershipSec;
+			let autoSwitchSeconds = teamBreakdown.autoSwitchOwnershipSec;
 			this.teamAutoSwitchOwnershipTotalSeconds += autoSwitchSeconds;
-			if(autoSwitchSeconds > 0 || breakdown.autoSwitchAtZero) this.timesTeamOwnSwitchAfterAuto++;
+			if(autoSwitchSeconds > 0 || teamBreakdown.autoSwitchAtZero) this.timesTeamOwnSwitchAfterAuto++;
 
-			let autoScaleSeconds = breakdown.autoScaleOwnershipSec;
+			let autoScaleSeconds = teamBreakdown.autoScaleOwnershipSec;
 			this.teamAutoScaleOwnershipTotalSeconds += autoScaleSeconds;
 			if(autoScaleSeconds > 0) this.timesTeamOwnScaleAfterAuto++;
 
-			this.teamTeleopSwitchOwnershipTotalSeconds += breakdown.teleopSwitchOwnershipSec;
-			this.teamTeleopScaleOwnershipTotalSeconds += breakdown.teleopScaleOwnershipsec;
+			this.teamTeleopSwitchOwnershipTotalSeconds += teamBreakdown.teleopSwitchOwnershipSec;
+			this.teamTeleopScaleOwnershipTotalSeconds += teamBreakdown.teleopScaleOwnershipSec;
 
-			if(breakdown.vaultBoostPlayed > 0) this.timesBoostPlayed++;
-			if(breakdown.vaultForcePlayed > 0) this.timesForcePlayed++;
-			if(breakdown.vaultLevitatePlayed === 3) this.timesLevitatePlayed++;
-			this.totalCubesAtMatchEndTotal += breakdown.vaultBoostTotal + breakdown.vaultForceTotal + breakdown.vaultLevitateTotal;
+			if(teamBreakdown.vaultBoostPlayed > 0) this.timesBoostPlayed++;
+			if(teamBreakdown.vaultForcePlayed > 0) this.timesForcePlayed++;
+			if(teamBreakdown.vaultLevitatePlayed === 3) this.timesLevitatePlayed++;
+			this.totalCubesAtMatchEndTotal += teamBreakdown.vaultBoostTotal + teamBreakdown.vaultForceTotal + teamBreakdown.vaultLevitateTotal;
 
 		}
 	}
+	getClimbPercent(){
+		return this.endgameClimbTotal / this.countableMatches;
+	}
+	// telop
+	getTeleopSwitchOwnershipTimePercent(){
+		return this.teamTeleopSwitchOwnershipTotalSeconds / (135 * this.countableMatches);
+	}
+	getTeleopScaleOwnershipTimePercent(){
+		return this.teamTeleopScaleOwnershipTotalSeconds / (135 * this.countableMatches);
+	}
+	//auto
+	getAutoSwitchOwnershipTimeAverage(){
+		return this.teamAutoSwitchOwnershipTotalSeconds / this.countableMatches;
+	}
+	getAutoScaleOwnershipTimeAverage(){
+		return this.teamAutoScaleOwnershipTotalSeconds / this.countableMatches;
+	}
+	getSuccessfulAutoSwitchOwnershipTimeAverage(){
+		return this.teamAutoSwitchOwnershipTotalSeconds / this.timesTeamOwnSwitchAfterAuto;
+	}
+	getSuccessfulAutoScaleOwnershipTimeAverage(){
+		return this.teamAutoScaleOwnershipTotalSeconds / this.timesTeamOwnScaleAfterAuto;
+	}
+
+	getAutoSwitchSuccessPercent(){
+		return this.timesTeamOwnSwitchAfterAuto / this.countableMatches;
+	}
+	getAutoScaleSuccessPercent(){
+		return this.timesTeamOwnScaleAfterAuto / this.countableMatches;
+	}
+
+
+	getAverageCubesInVault(){
+		return this.totalCubesAtMatchEndTotal / this.countableMatches;
+	}
+
+	hasAnyAuto(){
+		return this.getAutoSuccessPercent() >= .50;
+	}
+	hasSwitchAuto(){
+		return this.getAutoSwitchSuccessPercent() >= .60 && this.hasAnyAuto();
+	}
+	hasScaleAuto(){
+		return this.getAutoScaleSuccessPercent() >= .40 && this.hasAnyAuto();
+	}
+
 }
