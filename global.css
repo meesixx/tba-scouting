@@ -2,6 +2,11 @@ html, body{
 	background-color: #3bb7ff;
 	color: #FFFFFF;
 }
+hr{
+	background-color: transparent;
+	/*border-color: #FFFFFF;*/
+	border-top: 1px solid #FFFFFF;
+}
 h1, h2, h3 {
 	text-align: center;
 }
@@ -10,12 +15,22 @@ a.disable{
 	cursor: default;
 }
 
-/* Represents all span tags where its innerText should be replaced with a team number*/
+/* The classes defined here are usually for setting innerText and to keep track of them. */
 .current_team_number{ }
+.current_year{ }
+
 .current_team_name{ }
 .current_team_website_link{ }
 .current_team_website_label{ }
 .current_team_location{ }
+
+.current_record_total{ }
+.current_record_qual{ }
+.current_record_playoff{ }
+
+.success_auto_runs{ }
+.matches_played_number{ }
+.events_attended{ }
 
 .input_div{
 	width: 100%;
