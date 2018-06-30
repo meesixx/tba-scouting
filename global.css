@@ -1,6 +1,7 @@
 html, body{
 	background-color: #3bb7ff;
 	color: #FFFFFF;
+	margin: 0;
 }
 hr{
 	background-color: transparent;
@@ -38,6 +39,10 @@ a.disable{
 	width: 100%;
 	text-align:center;
 }
+.text_div{
+	margin: 0 auto;
+	width: 800px;
+}
 
 #team_number_input{
 	width: 200px;
@@ -46,4 +51,27 @@ a.disable{
 	font-size: 60px;
 	text-align: center;
 	color: #ff5238;
+}
+#nav_table{
+	width: 100%;
+	border-collapse: collapse;
+}
+#nav_table th{
+	height: 50px;
+	vertical-align: center;
+}
+#nav_table th.current_nav{
+	border-left: solid 1px #FFFFFF;
+	border-right: solid 1px #FFFFFF;
+}
+#nav_table th:not(.current_nav){
+	border-bottom: solid 1px #FFFFFF;
+	background-color: rgba(0,0,0, .2);
+}
+#nav_table th:hover{
+	background-color: rgba(0,0,0, .3);
+}
+#nav_table th.current_nav{
+	background-color: rgba(0,0,0, .3);
+	border-bottom: none;
 }

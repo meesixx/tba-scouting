@@ -1,19 +1,23 @@
 
 
-table, th, td {
-	border: solid 1px #FFFFFF;
+#sort_table {
 	border-collapse: collapse;
 }
-th{
+#sort_table th{
+	border: solid 1px #FFFFFF;
 	height: 50px;
 }
-th, td{
+#sort_table td{
+	border: solid 1px #FFFFFF;
 	padding: 5px;
 }
-tr:nth-child(even){
+#sort_table th{
+	padding: 5px;
+}
+#sort_table tr:nth-child(even){
 	background-color: rgba(100%, 100%, 100%, .1);
 }
-tr:hover{
+#sort_table tr:hover{
 	background-color: rgba(100%, 100%, 100%, .4);
 	color: #878787;
 }

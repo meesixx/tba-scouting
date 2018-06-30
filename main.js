@@ -5,6 +5,29 @@
 
 const API_URL = "https://www.thebluealliance.com/api/v3";
 
+function onTeamNumberInputKey(inputElement){
+	if(event.key === "Enter"){
+		let value = inputElement.value;
+		let teamNumber;
+		if(typeof value === 'string') {
+			if (value.length === 0) {
+				teamNumber = null;
+			} else {
+				teamNumber = +value;
+			}
+		} else {
+			if(typeof value !== 'number') throw "Unexpected value: " + value;
+
+			teamNumber = value;
+		}
+		if(getCurrentTeamNumber() === teamNumber){
+			return;
+		}
+		setCurrentTeamNumber(teamNumber);
+		setTagsTextToNull();
+		updateTeamData();
+	}
+}
 
 function prettyPercent(percent){
 	return "" + (Math.round(percent * 1000) / 10.0) + "%";

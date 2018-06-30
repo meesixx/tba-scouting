@@ -6,8 +6,22 @@
 		<script src="main.js"></script>
 	</head>
 	<body>
+		<script src="loadnav.js"></script>
+		<script>loadNav(".", ".");</script>
+
 		<h1>TBA Based Scouting</h1>
 		<hr/>
+		<div class="input_div">
+			<input type="number" id="team_number_input" onkeydown="onHomeTeamNumberInputKey(this)" placeholder="XXXX"/>
+		</div>
+		<div class="text_div">
+			<p>
+				With this website, you can see advanced statistics for all teams that you would like. You can also sort
+				all teams in an event and view teams in a certain event. This website relies on The Blue Alliance's APIs
+				so you must have an auth key from your <a href="https://www.thebluealliance.com/account">account page</a>.
+			</p>
+		</div>
+		<h3>This website was made in Javascript, HTML, and CSS by Josh Shannon from team 1444.</h3>
 
 		<script src="index.js"></script>
 	</body>

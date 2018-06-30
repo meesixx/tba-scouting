@@ -12,7 +12,7 @@
 	}
 
 	(function() { // main function
-		setQueryKey("event", undefined);
+		// setQueryKey("event", undefined);
 		updateYear();
 		updateTeams();
 		const year = getDesiredYear();
