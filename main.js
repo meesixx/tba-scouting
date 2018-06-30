@@ -27,6 +27,9 @@ function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
 	if(subUrl[0] !== "/"){
 		subUrl = "/" + subUrl;
 	}
+	if(subUrl[subUrl.length - 1] === "/"){
+		subUrl = subUrl.slice(0, subUrl.length - 1);
+	}
 	let finalUrl = API_URL + subUrl;
 	let request = new XMLHttpRequest();
 
@@ -82,7 +85,7 @@ function getQueryObject(){
 	}
 	return r;
 }
-function setQueryObject(object){
+function getQueryString(object){
 	let r = "";
 	for(let key in object){
 		let value = object[key];
@@ -95,23 +98,28 @@ function setQueryObject(object){
 		}
 		r += key + "=" + value;
 	}
-	// location.search = r;
-	window.history.replaceState(null, null, r);
+	return r;
+}
+function setQueryObject(object){
+	window.history.replaceState(null, null, getQueryString(object));
 }
 
 /**
  *
  * @param key The key
- * @param value The value to set
+ * @param value The value to set. If null, sets to "null" if undefined, removes key
  * @returns {boolean} false if the current value is equal to the new value or true if a new value was set.
- *          NOTE that true will probably never be returned because calling this function will make the page automatically reload
  */
 function setQueryKey(key, value){
 	let object = getQueryObject();
 	if(object[key] === "" + value){
 		return false;
 	}
-	object[key] = value;
+	if(value === undefined){
+		delete object[key];
+	} else {
+		object[key] = value;
+	}
 	setQueryObject(object);
 	return true;
 }
@@ -153,13 +161,42 @@ function setClassText(clazz, text){
 	}
 	return r;
 }
+function setClassHTML(clazz, text){
+	if(clazz === undefined || text === undefined) throw "You must pass both id, and text.";
+
+	if(text === null) {
+		text = "?";
+	}
+	let r = false;
+
+	for(let element of document.getElementsByClassName(clazz)){
+		r = true;
+		element.innerHTML = text;
+	}
+	return r;
+}
 function setCurrentTeamNumber(number){ // number can be number or null
 	if(number === undefined) throw "Must pass number argument (or null). Got undefined";
 	if(typeof number !== 'number' && number !== null) throw "number must be a Number. got: '" + number + "' as : " + (typeof number);
 
-	let numberString = "" + number; // A string representing a number or representing "null"
-
 	setQueryKey("team", number); // this will likely reload the page but the next time it's called it won't
+	updateTeamNumber();
+}
+
+/**
+ * @returns {?Number} The team number or null
+ */
+function getCurrentTeamNumber(){
+	let currentTeamNumber = getQueryObject()["team"];
+	if(currentTeamNumber === undefined || currentTeamNumber === "null"){
+		return null;
+	}
+	return +currentTeamNumber;
+}
+function updateTeamNumber(){
+	const number = getCurrentTeamNumber();
+	const numberString = "" + number;
+
 	document.title = "Scouting - " + numberString;
 
 	setClassText("current_team_number", number === null ? null : "" + number);
@@ -173,17 +210,6 @@ function setCurrentTeamNumber(number){ // number can be number or null
 		}
 	}
 }
-
-/**
- * @returns {?Number} The team number or null
- */
-function getCurrentTeamNumber(){
-	let currentTeamNumber = getQueryObject()["team"];
-	if(currentTeamNumber === undefined){
-		return null;
-	}
-	return +currentTeamNumber;
-}
 function getAuthKey(){
 	let authKey = getQueryObject()["auth"];
 	if(authKey === undefined || authKey === "null"){
@@ -194,12 +220,31 @@ function getAuthKey(){
 	}
 	return authKey;
 }
+
+/**
+ *
+ * @returns {string} Gets the auth key from the query url or prompts the user for one if there isn't already one
+ */
+function requestAuthKey(){
+	const authKey = getAuthKey();
+
+	if(authKey === null){
+		let result = prompt("Please enter auth key");
+		if(result === null){
+			alert("Please enter auth key next time. (Reload the page to reenter or press enter in team number input.)");
+			return "";
+		}
+		setAuthKey(result);
+		return getAuthKey();
+	}
+	return authKey;
+}
 function setAuthKey(authKey){
 	setQueryKey("auth", authKey);
 }
 
 function getDesiredYear(){
-	let year = getQueryObject()["year"];
+	const year = getQueryObject()["year"];
 	if(year === undefined || year === "null"){
 		let r = new Date().getFullYear();
 		setDesiredYear(r);
@@ -212,9 +257,38 @@ function setDesiredYear(year){
 	if(year === null || year === undefined) throw "Year cannot be null or undefined";
 
 	setQueryKey("year", year);
+	updateYear();
+}
+function updateYear(){
+	const year = getDesiredYear();
 	for(let yearElement of document.getElementsByClassName("current_year")){
 		yearElement.innerText = year;
 	}
+}
+
+function getTeams(){
+	const teamsString = getQueryObject()["teams"];
+	if(teamsString === undefined){
+		setQueryKey("teams", "");
+		return [];
+	}
+	if(teamsString === "null" || teamsString === ""){
+		return [];
+	}
+	const split = teamsString.split(",");
+	const r = [];
+	for(let s of split){
+		if(s === ""){
+			continue;
+		}
+		let value = +s;
+		if(+s !== value){
+			console.log("s must be NaN it's: '" + s + "' and value is: " + value);
+			continue;
+		}
+		r.push(value);
+	}
+	return r;
 }
 
 function getEventDate(event){
@@ -307,7 +381,6 @@ class RobotRanking extends Object{
 						this.qualTies++;
 					}
 				} else {
-					console.log("winning_alliance is: '" + match.winning_alliance + "'. It is either a tie or we will use the score to figure out who won.");
 					let bluePoints = match.score_breakdown.blue.total_points;
 					let redPoints = match.score_breakdown.red.total_points;
 					if (bluePoints === redPoints) {
@@ -360,9 +433,15 @@ class RobotRanking extends Object{
 			}
 		}
 	}
-	// valueOf(){
-	//
-	// }
+
+	/**
+	 *
+	 * @returns {*[]} Returns an array with a length of 3. [0] is to compare, [1] array of strings, [2] array of strings
+	 *          where each array of strings are things the robot is good at [1] is cool and [2] is extra cool
+	 */
+	rank(){
+		return [this.totalWins, [], []];
+	}
 
 	isRobotBlue(match){
 		return match.alliances.blue.team_keys.includes(this.teamKey);
@@ -447,6 +526,11 @@ class RobotRanking2018 extends RobotRanking{
 				case "None":
 					this.endgameNothingTotal++;
 					break;
+				case "Unknown":
+					console.log("Got Unknown at endgame. Match below");
+					console.log(match);
+					this.endgameNothingTotal++;
+					break;
 				default:
 					console.log("got: '" + endgame + "' as endgame.");
 					this.endgameNothingTotal++;
@@ -483,6 +567,75 @@ class RobotRanking2018 extends RobotRanking{
 			this.totalCubesAtMatchEndTotal += teamBreakdown.vaultBoostTotal + teamBreakdown.vaultForceTotal + teamBreakdown.vaultLevitateTotal;
 
 		}
+	}
+	valueOf(){
+		return this.rank()[0];
+	}
+	rank(){
+		const cool = [];
+		const special = [];
+
+		let r = 0;
+		if(this.canClimb()){
+			cool.push("can climb");
+			r += 16;
+			const extra = this.extraSupportedRobotsWhileClimbing();
+			r += extra * 5;
+			if(extra === 1){
+				special.push("double climb");
+			} else if(extra === 2){
+				special.push("triple climb");
+			}
+		}
+		if(this.hasSwitchAuto()){
+			r += 10;
+			cool.push("switch auto");
+		}
+		if(this.hasScaleAuto()){
+			r += 15;
+			special.push("scale auto");
+		}
+		let cubes = this.getAverageCubesInVault();
+		if(cubes > 6){
+			r += 10;
+			special.push("super cubes vault");
+		} else if(cubes > 5.5){
+			r += 8;
+			special.push("great cubes vault");
+		} else if(cubes > 5){
+			cool.push("good cubes vault");
+			r += 5;
+		}
+		if(this.getTeleopSwitchOwnershipTimePercent() > .9){
+			r += 5;
+			special.push("high switch ownership");
+		}
+		let scale = this.getTeleopScaleOwnershipTimePercent();
+		if(scale > .9){
+			r += 15;
+			special.push("super high scale ownership");
+		} else if(scale > .8){
+			r += 10;
+			special.push("high scale ownership");
+		} else if(scale > .65){
+			r += 7;
+			special.push("great scale ownership");
+		} else if(scale > .4){
+			r += 5;
+			cool.push("good scale");
+		}
+		if(this.endgameNothingTotal / this.countableMatches < .1){
+			r += 2;
+			cool.push("moves at end");
+		}
+
+		let losses = this.totalLosses;
+		if(losses < 3){ // you need to rack up wins for this to do anything
+			losses = 3;
+		}
+		r += Math.round(5 * this.totalWins / losses);
+		r += Math.round(this.rankingPointsTotal / 10.0);
+		return [r, cool, special];
 	}
 	getClimbPercent(){
 		return this.endgameClimbTotal / this.countableMatches;
@@ -524,10 +677,32 @@ class RobotRanking2018 extends RobotRanking{
 		return this.getAutoSuccessPercent() >= .50;
 	}
 	hasSwitchAuto(){
-		return this.getAutoSwitchSuccessPercent() >= .60 && this.hasAnyAuto();
+		return this.getAutoSwitchSuccessPercent() >= .54 && this.hasAnyAuto();
 	}
 	hasScaleAuto(){
 		return this.getAutoScaleSuccessPercent() >= .40 && this.hasAnyAuto();
 	}
+	canClimb(){
+		return this.getClimbPercent() >= .3;
+	}
+
+	/**
+	 *
+	 * @returns {number} -1 if !canClimb(), 0 if we can't double or triple climb, 1 for able to double climb and 2 for able to triple climb
+	 */
+	extraSupportedRobotsWhileClimbing(){
+		if(!this.canClimb()){
+			return -1;
+		}
+		let extraClimbs = this.numberDoubleClimbs + this.numberTripleClimbs;
+		if(extraClimbs / this.endgameClimbTotal >= .3){
+			if(this.numberTripleClimbs >= 2){
+				return 2;
+			}
+			return 1;
+		}
+		return 0;
+	}
+
 
 }

@@ -1,0 +1,23 @@
+
+
+table, th, td {
+	border: solid 1px #FFFFFF;
+	border-collapse: collapse;
+}
+th{
+	height: 50px;
+}
+th, td{
+	padding: 5px;
+}
+tr:nth-child(even){
+	background-color: rgba(100%, 100%, 100%, .1);
+}
+tr:hover{
+	background-color: rgba(100%, 100%, 100%, .4);
+	color: #878787;
+}
+
+#sort_table{
+	width: 100%;
+}

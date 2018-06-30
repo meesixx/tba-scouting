@@ -30,16 +30,7 @@ function updateTeamData(){
 		setTagsTextToNull();
 		return;
 	}
-	let authKey = getAuthKey();
-	if(authKey === null){
-		let result = prompt("Please enter auth key");
-		if(result === null){
-			alert("Please enter auth key next time. (Reload the page to reenter or press enter in team number input.)");
-			return;
-		}
-		setAuthKey(result);
-		authKey = getAuthKey();
-	}
+	const authKey = requestAuthKey();
 	const year = getDesiredYear();
 	console.log("Updating data for : " + teamNumber);
 
@@ -92,25 +83,47 @@ function updateTeamData(){
 		setClassText("countable_matches_played_number", robotRanking.countableMatches);
 		let dataArray = [];
 		dataArray.push(
+			"Data from: " + robotRanking.eventsAttendedKeys.length + " events. Keys: " + robotRanking.eventsAttendedKeys.join(", "),
+			"",
 			"Win Rate: " + prettyPercent(robotRanking.getWinPercentage()),
 			"Qual Win Rate: " + prettyPercent(robotRanking.getQualWinPercentage()),
 			"Playoff Win Rate: " + prettyPercent(robotRanking.getPlayoffWinPercentage())
 		);
 		if(robotRanking instanceof RobotRanking2018){
 			dataArray.push(
-				"Auto Switch Success Rate: " + prettyPercent(robotRanking.getAutoSwitchSuccessPercent()),
-				"Auto Scale Success Rate: " + prettyPercent(robotRanking.getAutoScaleSuccessPercent()),
+				"",
+				"(Custom) Ranking Value: " + robotRanking.rank()[0],
+				"",
+				"Switch Auto: " + (robotRanking.hasSwitchAuto() ? "YES" : "NO"),
+				"Scale Auto: " + (robotRanking.hasScaleAuto() ? "YES" : "NO"),
 				"Average Teleop Scale Ownership: " + prettyPercent(robotRanking.getTeleopScaleOwnershipTimePercent()),
 				"Average Teleop Switch Ownership: " + prettyPercent(robotRanking.getTeleopSwitchOwnershipTimePercent()),
 				"Average Cubes in Vault: " + prettyDecimal(robotRanking.getAverageCubesInVault()),
+				"",
 				"Climb Rate: " + prettyPercent(robotRanking.getClimbPercent()),
 				"Total Climbs: " + robotRanking.endgameClimbTotal,
+				"Can Climb: " + (robotRanking.canClimb() ? "YES" : "NO"),
+				"Extra Robots When Climbing: " + robotRanking.extraSupportedRobotsWhileClimbing(),
+				"",
+				"Auto Switch Success Rate: " + prettyPercent(robotRanking.getAutoSwitchSuccessPercent()),
+				"Auto Scale Success Rate: " + prettyPercent(robotRanking.getAutoScaleSuccessPercent()),
 				"Number Double Climbs: " + robotRanking.numberDoubleClimbs,
-				"Number Triple Climbs: " + robotRanking.numberTripleClimbs
+				"Number Triple Climbs: " + robotRanking.numberTripleClimbs,
+				"",
+				"Ranking Points: " + robotRanking.rankingPointsTotal
 			);
 
 		}
+		dataArray.push(
+			"",
+			"",
+			"Auto Points Average: " + prettyDecimal(robotRanking.autoPointsTotal / robotRanking.countableMatches),
+			"Teleop Points Average: " + prettyDecimal(robotRanking.telopPointsTotal / robotRanking.countableMatches),
+			"Foul Points Average: " + prettyDecimal(robotRanking.foulPointsReceivedTotal / robotRanking.countableMatches),
+			"Total Points Average: " + prettyDecimal(robotRanking.totalPointsTotal / robotRanking.countableMatches)
+		);
 		let dataString = dataArray.join("<br/>");
+		console.log("hi");
 		setIDHTML("additional_team_data", dataString);
 	}, function(){
 		console.error("Was unable to get matches.");
@@ -125,15 +138,19 @@ function updateTeamData(){
 			return +getEventDate(event) - +getEventDate(event2);
 		});
 		for(let i = 0; i < eventsArray.length; i++){
-			let event = eventsArray[i];
-			eventsInfo += event.name;
+			const event = eventsArray[i];
+
+			const queryObject = Object.assign({}, getQueryObject(), {"event": event.key});
+			const link = "../event/" + getQueryString(queryObject);
+			const aElement = "<a href=\"" + link + "\">" + event.key + "<a/>";
+			eventsInfo += event.name + "(" + aElement + ")";
 			if(i === (eventsArray.length - 2)){
 				eventsInfo += ", and ";
 			} else if(i !== (eventsArray.length - 1)){
 				eventsInfo += ", ";
 			}
 		}
-		setClassText("events_attended", eventsInfo);
+		setClassHTML("events_attended", eventsInfo);
 	}, function(){
 		console.error("Got error when getting events.");
 	});
@@ -163,18 +180,9 @@ function setTagsTextToNull(){
 }
 
 (function(){ // main function
-	let teamNumber = getQueryObject()["team"];
-	if(teamNumber === undefined || teamNumber === "null"){
-		setCurrentTeamNumber(null);
-	} else {
-		setCurrentTeamNumber(+teamNumber);
-	}
-	let desiredYear = getQueryObject()["year"]; // string, undefined, or "null"
-	if(desiredYear === undefined || desiredYear === "null"){
-		setDesiredYear(new Date().getFullYear());
-	} else {
-		setDesiredYear(+desiredYear);
-	}
+	updateTeamNumber();
+	updateYear();
+
 	setTagsTextToNull();
 	updateTeamData()
 })();
