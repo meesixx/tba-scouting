@@ -67,6 +67,7 @@ a.disable{
 #nav_table th:not(.current_nav){
 	border-bottom: solid 1px #FFFFFF;
 	background-color: rgba(0,0,0, .2);
+	cursor: pointer;
 }
 #nav_table th:hover{
 	background-color: rgba(0,0,0, .3);
