@@ -2,7 +2,6 @@
 function onTeamTeamNumberEnter(event, inputElement){
 	if(event.key === "Enter"){
 		updateTeamNumberInputElement(inputElement);
-		location.href = "team/" + location.search;
 	}
 }
 
