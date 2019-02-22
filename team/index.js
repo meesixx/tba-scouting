@@ -2,6 +2,7 @@
 function onTeamTeamNumberEnter(event, inputElement){
 	if(event.key === "Enter"){
 		updateTeamNumberInputElement(inputElement);
+		updateTeamData()
 	}
 }
 
