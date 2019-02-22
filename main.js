@@ -4,32 +4,30 @@
  */
 
 const API_URL = "https://www.thebluealliance.com/api/v3";
-
-function onTeamNumberInputKey(inputElement){
-	if(event.key === "Enter"){
-		let value = inputElement.value;
-		let teamNumber;
-		if(typeof value === 'string') {
-			if (value.length === 0) {
-				teamNumber = null;
-			} else {
-				teamNumber = +value;
-			}
+function updateTeamNumberInputElement(inputElement){
+	let value = inputElement.value;
+	let teamNumber;
+	if(typeof value === 'string') {
+		if (value.length === 0) {
+			teamNumber = null;
 		} else {
-			if(typeof value !== 'number') throw "Unexpected value: " + value;
+			teamNumber = +value;
+		}
+	} else {
+		if(typeof value !== 'number') throw "Unexpected value: " + value;
 
-			teamNumber = value;
-		}
-		if(getCurrentTeamNumber() === teamNumber){
-			return;
-		}
-		setCurrentTeamNumber(teamNumber);
-		setTagsTextToNull();
-		updateTeamData();
+		teamNumber = value;
 	}
+	if(getCurrentTeamNumber() === teamNumber){
+		return;
+	}
+	setCurrentTeamNumber(teamNumber);
 }
 
 function prettyPercent(percent){
+    if(percent === null || percent === undefined){
+    	throw "percent is: " + percent;
+	}
 	return "" + (Math.round(percent * 1000) / 10.0) + "%";
 }
 function prettyDecimal(decimal){
@@ -40,8 +38,8 @@ function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
 	if(!subUrl){
 		throw "subUrl cannot be blank and cannot be null. Value: '" + subUrl + "'";
 	}
-	if(!authKey){
-		throw "Must provide auth key";
+	if(authKey === null || authKey === undefined){
+		throw "Auth key cannot be null or undefined.";
 	}
 	if(!successFunction){
 		throw "Must provide success function";
@@ -111,6 +109,9 @@ function getQueryObject(){
 function getQueryString(object){
 	let r = "";
 	for(let key in object){
+	    if(!object.hasOwnProperty(key)){
+	    	throw "object: " + object + " doesn't have key: " + key;
+		}
 		let value = object[key];
 		key = encodeURIComponent("" + key);
 		value = encodeURIComponent(value);
@@ -152,7 +153,11 @@ function setIDText(id, text){
 	if(text === null){
 		text = "?";
 	}
-	let element = document.getElementById(id);
+	let element = null;
+	try {
+		element = document.getElementById(id);
+	} catch(exception){
+	}
 	if(element === null){
 		throw "Element with id: '" + id + "' not found.";
 	}
@@ -164,7 +169,11 @@ function setIDHTML(id, html){
 	if(html === null){
 		html = "?";
 	}
-	let element = document.getElementById(id);
+	let element = null;
+	try {
+		element = document.getElementById(id);
+	} catch(exception){}
+
 	if(element === null){
 		throw "Element with id: '" + id + "' not found.";
 	}
@@ -203,7 +212,7 @@ function setCurrentTeamNumber(number){ // number can be number or null
 	if(typeof number !== 'number' && number !== null) throw "number must be a Number. got: '" + number + "' as : " + (typeof number);
 
 	setQueryKey("team", number); // this will likely reload the page but the next time it's called it won't
-	updateTeamNumber();
+	updateTeamNumberTitle();
 }
 
 /**
@@ -216,7 +225,7 @@ function getCurrentTeamNumber(){
 	}
 	return +currentTeamNumber;
 }
-function updateTeamNumber(){
+function updateTeamNumberTitle(){
 	const number = getCurrentTeamNumber();
 	const numberString = "" + number;
 
@@ -330,6 +339,7 @@ class RobotRanking extends Object{
 		this.eventsAttendedKeys = [];
 		this.countableMatches = 0; // aka breakdownable matches. Should be used with more advanced stats
 
+		this.rankingPointsTotal = 0;
 		this.totalMatches = matches.length; // should be used with wins losses, etc.
 		this.qualMatches = 0;
 		this.playoffMatches = 0;
@@ -368,6 +378,7 @@ class RobotRanking extends Object{
 			if(match.score_breakdown !== null){
 				this.countableMatches++;
 				teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
+				this.rankingPointsTotal += teamBreakdown.rp;
 			}
 			let isPlayoff = match.comp_level !== "qm";
 			if(isPlayoff){
@@ -501,7 +512,6 @@ class RobotRanking2018 extends RobotRanking{
 	constructor(teamNumber, matches){
 		super(teamNumber, matches);
 		/** The number of matches that affected these rankings (if a match had no score_breakdown, it wouldn't count as a "countable match" */
-		this.rankingPointsTotal = 0;
 
 		this.endgameNothingTotal = 0; // "None"
 		this.endgameLevitateTotal = 0; // "Levitate"
@@ -534,7 +544,6 @@ class RobotRanking2018 extends RobotRanking{
 			let isOnBlue = this.isRobotBlue(match);
 			let teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
 
-			this.rankingPointsTotal += teamBreakdown.rp;
 			let endgame = teamBreakdown["endgameRobot" + this.getRobotNumber(match)];
 			switch(endgame){
 				case "Climbing":
@@ -591,6 +600,7 @@ class RobotRanking2018 extends RobotRanking{
 
 		}
 	}
+	// region 2018 Getters
 	valueOf(){
 		return this.rank()[0];
 	}
@@ -726,6 +736,104 @@ class RobotRanking2018 extends RobotRanking{
 		}
 		return 0;
 	}
+	// endregion
 
+}
+const BAY_HATCH = "Panel";
+const BAY_HATCH_CARGO = "PanelAndCargo";
+const BAY_NONE = "None";
+const BAY_UNKNOWN = "Unknown";
 
+class RobotRanking2019 extends RobotRanking{
+	constructor(teamNumber, matches){
+		super(teamNumber, matches);
+		console.log("teamNumber: " + teamNumber);
+		this.endgame1 = 0;
+		this.endgame2 = 0;
+		this.endgame3 = 0;
+		this.endgameNone = 0;
+
+		this.crossSandstorm = 0;
+		this.crossTeleop = 0;
+		this.crossNever = 0;
+
+		this.startLevel2AndCross = 0;
+		this.startOther = 0; // start somewhere other than level 2 or started on level 2 and never crossed
+
+		for(const match of matches){
+			if(match.score_breakdown === null){
+				continue;
+			}
+			const isOnBlue = this.isRobotBlue(match);
+			const teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
+			const robotNumber = this.getRobotNumber(match); // 1 - left, 2 - middle, 3 - right (driver station position)
+			console.log(teamBreakdown);
+			const endgame = teamBreakdown["endgameRobot" + robotNumber]; // HabLevel1 HabLevel2 HabLevel3 None Unknown
+			const habLine = teamBreakdown["habLineRobot" + robotNumber]; // CrossedHabLineInSandstorm CrossedHabLineInTeleop None Unknown
+			const startingLevel = teamBreakdown["preMatchLevelRobot" + robotNumber]; // HabLevel1 HabLevel2 Unknown
+
+			switch(endgame){
+				case "HabLevel1":
+					this.endgame1++;
+					break;
+				case "HabLevel2":
+					this.endgame2++;
+					break;
+				case "HabLevel3":
+					this.endgame3++;
+					break;
+				case "None":
+					this.endgameNone++;
+					break;
+				case "Unknown":
+					break;
+				default:
+					console.log("Unsupported/unknown endgame: " + endgame);
+					break;
+			}
+			switch(habLine){
+				case "CrossedHabLineInSandstorm":
+					this.crossSandstorm++;
+					break;
+				case "CrossedHabLineInTeleop":
+					this.crossTeleop++;
+					break;
+				case "None":
+					this.crossNever++;
+					break;
+				case "Unknown":
+					break;
+				default:
+					console.log("Unknown habLineRobot: " + habLine);
+			}
+			if(startingLevel === "HabLevel1" || habLine === "None"){
+				this.startOther++;
+			} else if(startingLevel === "HabLevel2"){
+				this.startLevel2AndCross++;
+			}
+		}
+	}
+
+	getEndgameLevel1String(){
+		return this.endgame1 + " (" + prettyPercent(this.endgame1 / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
+	}
+	getEndgameLevel2String(){
+		return this.endgame2 + " (" + prettyPercent(this.endgame2 / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
+	}
+	getEndgameLevel3String(){
+		return this.endgame3 + " (" + prettyPercent(this.endgame3 / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
+	}
+	getEndgameNoneString(){
+		return this.endgameNone + " (" + prettyPercent(this.endgameNone / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
+	}
+
+	getMatchesDeadString(){
+		return this.crossNever + " (" + prettyPercent(this.crossNever / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
+	}
+	getMatchesCrossSandstormString(){
+		return this.crossSandstorm + " (" + prettyPercent(this.crossSandstorm / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
+	}
+	getMatchesCrossTeleopString(){
+		return this.crossTeleop + " (" + prettyPercent(this.crossSandstorm / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
+	}
 }

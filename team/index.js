@@ -1,4 +1,10 @@
 
+function onTeamTeamNumberEnter(event, inputElement){
+	if(event.key === "Enter"){
+		updateTeamNumberInputElement(inputElement);
+		location.href = "team/" + location.search;
+	}
+}
 
 function updateTeamData(){
 	const teamNumber = getCurrentTeamNumber(); // null or number
@@ -39,10 +45,13 @@ function updateTeamData(){
 	});
 
 	getJsonData("team/frc" + teamNumber + "/matches/" + year, authKey, function(jsonObject){
+	    console.log("logging json object. The year is: " + year);
 		console.log(jsonObject);
 		let robotRanking;
 		if(year === 2018){
 			robotRanking = new RobotRanking2018(teamNumber, jsonObject);
+		} if(year === 2019){
+            robotRanking = new RobotRanking2019(teamNumber, jsonObject);
 		} else {
 			robotRanking = new RobotRanking(teamNumber, jsonObject);
 		}
@@ -64,12 +73,12 @@ function updateTeamData(){
 			"",
 			"Win Rate: " + prettyPercent(robotRanking.getWinPercentage()),
 			"Qual Win Rate: " + prettyPercent(robotRanking.getQualWinPercentage()),
-			"Playoff Win Rate: " + prettyPercent(robotRanking.getPlayoffWinPercentage())
+			"Playoff Win Rate: " + prettyPercent(robotRanking.getPlayoffWinPercentage()),
+			"",
+			"(Custom) Ranking Value: " + robotRanking.rank()[0],
 		);
 		if(robotRanking instanceof RobotRanking2018){
 			dataArray.push(
-				"",
-				"(Custom) Ranking Value: " + robotRanking.rank()[0],
 				"",
 				"Switch Auto: " + (robotRanking.hasSwitchAuto() ? "YES" : "NO"),
 				"Scale Auto: " + (robotRanking.hasScaleAuto() ? "YES" : "NO"),
@@ -85,13 +94,28 @@ function updateTeamData(){
 				"Auto Switch Success Rate: " + prettyPercent(robotRanking.getAutoSwitchSuccessPercent()),
 				"Auto Scale Success Rate: " + prettyPercent(robotRanking.getAutoScaleSuccessPercent()),
 				"Number Double Climbs: " + robotRanking.numberDoubleClimbs,
-				"Number Triple Climbs: " + robotRanking.numberTripleClimbs,
-				"",
-				"Ranking Points: " + robotRanking.rankingPointsTotal
+				"Number Triple Climbs: " + robotRanking.numberTripleClimbs
 			);
 
+		} else if(robotRanking instanceof RobotRanking2019){
+			dataArray.push(
+				"",
+				"Matches Dead: " + robotRanking.getMatchesDeadString(),
+				"Cross in Sandstorm: " + robotRanking.getMatchesCrossSandstormString(),
+				"Cross in Teleop: " + robotRanking.getMatchesCrossTeleopString(),
+				"",
+				"Start and Cross Level 2: " + robotRanking.startLevel2AndCross,
+				"Start Level 1 or Never Cross: " + robotRanking.startOther,
+				"",
+				"Endgame Level 1: " + robotRanking.getEndgameLevel1String(),
+				"Endgame Level 2: " + robotRanking.getEndgameLevel2String(),
+				"Endgame Level 3: " + robotRanking.getEndgameLevel3String(),
+				"Endgame None: " + robotRanking.getEndgameNoneString()
+			);
 		}
 		dataArray.push(
+			"",
+			"Ranking Points: " + robotRanking.rankingPointsTotal,
 			"",
 			"",
 			"Auto Points Average: " + prettyDecimal(robotRanking.autoPointsTotal / robotRanking.countableMatches),
@@ -132,12 +156,7 @@ function updateTeamData(){
 		console.error("Got error when getting events.");
 	});
 }
-function disableWebsite(){
-	for (let link of document.getElementsByClassName("current_team_website_link")) {
-		link.href = "";
-		link.classList.add("disable");
-	}
-}
+
 function setTagsTextToNull(){
 	setClassText("current_team_name", null);
 	disableWebsite();
@@ -153,13 +172,18 @@ function setTagsTextToNull(){
 	setClassText("countable_matches_played_number", null);
 	setClassText("events_attended", null);
 
-	setIDText("additional_team_data", null);
 }
-
+function disableWebsite(){
+	for (let link of document.getElementsByClassName("current_team_website_link")) {
+		link.href = "";
+		link.classList.add("disable");
+	}
+}
 (function(){ // main function
-	updateTeamNumber();
+	updateTeamNumberTitle();
 	updateYear();
 
 	setTagsTextToNull();
+	setIDText("additional_team_data", null);
 	updateTeamData()
 })();

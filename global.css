@@ -44,13 +44,18 @@ a.disable{
 	width: 800px;
 }
 
-#team_number_input{
-	width: 200px;
+#team_number_input, #event_code_input, #year_input{
 	height: 80px;
 	background-color: rgba(100%, 100%, 100%, .2);
 	font-size: 60px;
 	text-align: center;
 	color: #ff5238;
+}
+#team_number_input, #year_input{
+	width: 200px;
+}
+#event_code_input{
+	width:400px;
 }
 #nav_table{
 	width: 100%;

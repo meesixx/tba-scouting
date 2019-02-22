@@ -69,6 +69,7 @@
 				teamTD.style.fontWeight = "bold";
 				recordTD.innerText = ranking.getTotalRecordString();
 				teleopTD.innerText = "" + ranking.telopPointsTotal;
+				teleopTD.align = "right";
 				coolTD.innerText = rankArray[1].join(", ");
 				extraTD.innerText = rankArray[2].join(", ");
 				row.appendChild(rankTD);
