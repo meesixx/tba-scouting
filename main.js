@@ -328,6 +328,15 @@ function getEventDate(event){
 	let split = dateString.split("-");
 	return new Date(+split[0], +split[1], +split[2]);
 }
+function createRobotRanking(year, teamNumber, matches){
+	switch(year){
+		case 2018:
+			return new RobotRanking2018(teamNumber, matches);
+		case 2019:
+			return new RobotRanking2019(teamNumber, matches);
+	}
+	return new RobotRanking(teamNumber, matches);
+}
 
 
 class RobotRanking extends Object{

@@ -27,12 +27,7 @@ function onTeamClick(teamNumber){
 		const teams = getTeams();
 		for (const team of teams) {
 			getJsonData("team/frc" + team + "/matches/" + year, authKey, function (matches) {
-				let robotRanking;
-				if (year === 2018) {
-					robotRanking = new RobotRanking2018(team, matches);
-				} else {
-					robotRanking = new RobotRanking(team, matches);
-				}
+				const robotRanking = createRobotRanking(year, team, matches);
 				rankings.push(robotRanking);
 			}, function () {
 				console.log("got error for team: " + team);
