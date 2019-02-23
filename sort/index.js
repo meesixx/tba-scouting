@@ -1,3 +1,8 @@
+function onTeamClick(teamNumber){
+	setCurrentTeamNumber(teamNumber);
+	location.href = "../team/" + location.search;
+}
+
 (function(){
 	function updateTeams() {
 		const teams = getTeams();
@@ -65,7 +70,8 @@
 				const coolTD = document.createElement("td");
 				const extraTD = document.createElement("td");
 				rankTD.innerText = "" + rankNumber;
-				teamTD.innerText = "" + teamNumber;
+				// teamTD.innerText = "" + teamNumber;
+				teamTD.innerHTML = "<a onclick='onTeamClick(" + teamNumber + ")'>" + teamNumber + "</a>";
 				teamTD.style.fontWeight = "bold";
 				recordTD.innerText = ranking.getTotalRecordString();
 				teleopTD.innerText = "" + ranking.telopPointsTotal;

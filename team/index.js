@@ -110,7 +110,21 @@ function updateTeamData(){
 				"Endgame Level 1: " + robotRanking.getEndgameLevel1String(),
 				"Endgame Level 2: " + robotRanking.getEndgameLevel2String(),
 				"Endgame Level 3: " + robotRanking.getEndgameLevel3String(),
-				"Endgame None: " + robotRanking.getEndgameNoneString()
+				"Endgame None: " + robotRanking.getEndgameNoneString(),
+				"",
+				"Alliance Cargo Ship Hatches Placed: " + robotRanking.getAllianceCargoShipHatchesPlacedString(),
+				"Alliance Cargo Ship Cargo Placed: " + robotRanking.getAllianceCargoShipCargoPlacedString(),
+				"",
+				"",
+				"Alliance Rocket 1 Hatches Placed: " + robotRanking.getAllianceLevel1RocketHatchesString(),
+				"Alliance Rocket 1 Cargo Placed: " + robotRanking.getAllianceLevel1RocketCargoString(),
+				"",
+				"Alliance Rocket 2 Hatches Placed: " + robotRanking.getAllianceLevel2RocketHatchesString(),
+				"Alliance Rocket 2 Cargo Placed: " + robotRanking.getAllianceLevel2RocketCargoString(),
+				"",
+				"Alliance Rocket 3 Hatches Placed: " + robotRanking.getAllianceLevel3RocketHatchesString(),
+				"Alliance Rocket 3 Cargo Placed: " + robotRanking.getAllianceLevel3RocketCargoString(),
+				"",
 			);
 		}
 		dataArray.push(

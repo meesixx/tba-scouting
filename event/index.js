@@ -52,14 +52,20 @@ function requestEventTeams(){
 			console.log("teamKeys is not iterable");
 			return;
 		}
+		let teamsHtml = ""
 		for(const teamKey of teamKeys){
 			const teamNumber = +teamKey.slice(3, teamKey.length);
 			teams.push(teamNumber);
+			teamsHtml += "<a onclick='onTeamClick(" + teamNumber + ")'>" + teamNumber + "</a><br/>";
 		}
-		setIDHTML("teams", teams.join("<br/>"));
+		setIDHTML("teams", teamsHtml);
 	}, function(){
 		console.log("Couldn't get event data for: " + eventKey);
 	});
+}
+function onTeamClick(teamNumber){
+    setCurrentTeamNumber(teamNumber);
+	location.href = "../team/" + location.search;
 }
 
 // (function(){

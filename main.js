@@ -739,10 +739,11 @@ class RobotRanking2018 extends RobotRanking{
 	// endregion
 
 }
-const BAY_HATCH = "Panel";
-const BAY_HATCH_CARGO = "PanelAndCargo";
-const BAY_NONE = "None";
-const BAY_UNKNOWN = "Unknown";
+
+const ROCKET_LEVEL3_SLOTS = ["topLeftRocketFar", "topLeftRocketNear", "topRightRocketFar", "topRightRocketNear"];
+const ROCKET_LEVEL2_SLOTS = ["midLeftRocketFar", "midLeftRocketNear", "midRightRocketFar", "midRightRocketNear"];
+const ROCKET_LEVEL1_SLOTS = ["lowLeftRocketFar", "lowLeftRocketNear", "lowRightRocketFar", "lowRightRocketNear"];
+const ALL_ROCKET_SLOTS = ROCKET_LEVEL1_SLOTS.concat(ROCKET_LEVEL2_SLOTS).concat(ROCKET_LEVEL3_SLOTS);
 
 class RobotRanking2019 extends RobotRanking{
 	constructor(teamNumber, matches){
@@ -760,14 +761,35 @@ class RobotRanking2019 extends RobotRanking{
 		this.startLevel2AndCross = 0;
 		this.startOther = 0; // start somewhere other than level 2 or started on level 2 and never crossed
 
+		this.allianceCargoShipHatchesPlaced = 0;
+		this.allianceCargoShipHatchesMissed = 0;
+
+		this.allianceCargoShipCargoPlaced = 0;
+		this.allianceCargoShipCargoMissed = 0;
+
+		this.allianceRocket1HatchesPlaced = 0;
+		this.allianceRocket1HatchesMissed = 0;
+		this.allianceRocket2HatchesPlaced = 0;
+		this.allianceRocket2HatchesMissed = 0;
+		this.allianceRocket3HatchesPlaced = 0;
+		this.allianceRocket3HatchesMissed = 0;
+
+		this.allianceRocket1CargoPlaced = 0;
+		this.allianceRocket1CargoMissed = 0;
+		this.allianceRocket2CargoPlaced = 0;
+		this.allianceRocket2CargoMissed = 0;
+		this.allianceRocket3CargoPlaced = 0;
+		this.allianceRocket3CargoMissed = 0;
+
 		for(const match of matches){
 			if(match.score_breakdown === null){
 				continue;
 			}
 			const isOnBlue = this.isRobotBlue(match);
 			const teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
-			const robotNumber = this.getRobotNumber(match); // 1 - left, 2 - middle, 3 - right (driver station position)
+			console.log(match.key);
 			console.log(teamBreakdown);
+			const robotNumber = this.getRobotNumber(match); // 1 - left, 2 - middle, 3 - right (driver station position)
 			const endgame = teamBreakdown["endgameRobot" + robotNumber]; // HabLevel1 HabLevel2 HabLevel3 None Unknown
 			const habLine = teamBreakdown["habLineRobot" + robotNumber]; // CrossedHabLineInSandstorm CrossedHabLineInTeleop None Unknown
 			const startingLevel = teamBreakdown["preMatchLevelRobot" + robotNumber]; // HabLevel1 HabLevel2 Unknown
@@ -805,12 +827,75 @@ class RobotRanking2019 extends RobotRanking{
 					break;
 				default:
 					console.log("Unknown habLineRobot: " + habLine);
+					break;
 			}
 			if(startingLevel === "HabLevel1" || habLine === "None"){
 				this.startOther++;
 			} else if(startingLevel === "HabLevel2"){
 				this.startLevel2AndCross++;
 			}
+			// const shipTopRight = match.bay1;
+			// const shipMiddleRight = match.bay2;
+			// const shipBottomRight = match.bay3;
+			// const shipCenterRight = match.bay4; // correct
+			// const shipCenterLeft = match.bay5; // correct
+			// const shipBottomLeft = match.bay6;
+			// const shipMiddleLeft = match.bay7;
+			// const shipTopLeft = match.bay8;
+			for(let i = 1; i <= 8; i++){
+				const pre = teamBreakdown["preMatchBay" + i];
+				const post = teamBreakdown["bay" + i];
+				// console.log(i);
+				// console.log(pre);
+				// console.log(post);
+				if(post !== "Unknown") {
+					if (pre !== "Panel" && pre !== "Unknown") {
+						if (post === "Panel" || post === "PanelAndCargo") {
+							this.allianceCargoShipHatchesPlaced++;
+						} else {
+							this.allianceCargoShipHatchesMissed++;
+						}
+					}
+					if (post === "PanelAndCargo") {
+						this.allianceCargoShipCargoPlaced++;
+					} else {
+						this.allianceCargoShipCargoMissed++;
+					}
+				}
+			}
+			for(const rocketSlot of ALL_ROCKET_SLOTS){
+			    let level;
+			    if(ROCKET_LEVEL1_SLOTS.includes(rocketSlot)){
+			    	level = "1";
+				} else if(ROCKET_LEVEL2_SLOTS.includes(rocketSlot)){
+			    	level = "2";
+				} else if(ROCKET_LEVEL3_SLOTS.includes(rocketSlot)){
+			    	level = "3";
+				} else {
+			    	throw new Error();
+				}
+			    console.log(level + " rocketSlot: " + rocketSlot);
+				const value = teamBreakdown[rocketSlot];
+			    switch(value){
+					case "Panel":
+						this["allianceRocket" + level + "HatchesPlaced"]++;
+						this["allianceRocket" + level + "CargoMissed"]++;
+						break;
+					case "PanelAndCargo":
+						this["allianceRocket" + level + "HatchesPlaced"]++;
+						this["allianceRocket" + level + "CargoPlaced"]++;
+						break;
+					case "None":
+						this["allianceRocket" + level + "HatchesMissed"]++;
+						this["allianceRocket" + level + "CargoMissed"]++;
+						break;
+					case "Unknown":
+						break;
+					default:
+						console.log("Unknown value: " + value + " for rocketSlot: " + rocketSlot + " and level: " + level);
+				}
+			}
+
 		}
 	}
 
@@ -836,4 +921,34 @@ class RobotRanking2019 extends RobotRanking{
 	getMatchesCrossTeleopString(){
 		return this.crossTeleop + " (" + prettyPercent(this.crossSandstorm / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
 	}
+
+	getAllianceCargoShipHatchesPlacedString(){
+		return this.allianceCargoShipHatchesPlaced + " (" + prettyPercent(this.allianceCargoShipHatchesPlaced / (this.allianceCargoShipHatchesPlaced + this.allianceCargoShipHatchesMissed)) + ")";
+	}
+	getAllianceCargoShipCargoPlacedString(){
+		return this.allianceCargoShipCargoPlaced + " (" + prettyPercent(this.allianceCargoShipCargoPlaced / (this.allianceCargoShipCargoPlaced + this.allianceCargoShipCargoMissed)) + ")";
+	}
+
+	// region rocket
+	getAllianceLevel1RocketHatchesString(){
+		return this.allianceRocket1HatchesPlaced + " (" + prettyPercent(this.allianceRocket1HatchesPlaced / (this.allianceRocket1HatchesPlaced + this.allianceRocket1HatchesMissed)) + ")";
+	}
+	getAllianceLevel1RocketCargoString(){
+		return this.allianceRocket1CargoPlaced + " (" + prettyPercent(this.allianceRocket1CargoPlaced / (this.allianceRocket1CargoPlaced + this.allianceRocket1CargoMissed)) + ")";
+	}
+
+	getAllianceLevel2RocketHatchesString(){
+		return this.allianceRocket2HatchesPlaced + " (" + prettyPercent(this.allianceRocket2HatchesPlaced / (this.allianceRocket2HatchesPlaced + this.allianceRocket2HatchesMissed)) + ")";
+	}
+	getAllianceLevel2RocketCargoString(){
+		return this.allianceRocket2CargoPlaced + " (" + prettyPercent(this.allianceRocket2CargoPlaced / (this.allianceRocket2CargoPlaced + this.allianceRocket2CargoMissed)) + ")";
+	}
+
+	getAllianceLevel3RocketHatchesString(){
+		return this.allianceRocket3HatchesPlaced + " (" + prettyPercent(this.allianceRocket3HatchesPlaced / (this.allianceRocket3HatchesPlaced + this.allianceRocket3HatchesMissed)) + ")";
+	}
+	getAllianceLevel3RocketCargoString(){
+		return this.allianceRocket3CargoPlaced + " (" + prettyPercent(this.allianceRocket3CargoPlaced / (this.allianceRocket3CargoPlaced + this.allianceRocket3CargoMissed)) + ")";
+	}
+	// endregion
 }
