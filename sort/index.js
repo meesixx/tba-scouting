@@ -26,7 +26,7 @@ function onTeamClick(teamNumber){
 		let numberErrors = 0;
 		const teams = getTeams();
 		for (const team of teams) {
-			getJsonData("team/frc" + team + "/matches/" + year, authKey, function (matches) {
+			getTeamMatches(team, year, authKey, function (matches) {
 				const robotRanking = createRobotRanking(year, team, matches);
 				rankings.push(robotRanking);
 			}, function () {
@@ -48,6 +48,8 @@ function onTeamClick(teamNumber){
 			console.log(rankings);
 			const sortTable = document.getElementById("sort_table");
 			if (sortTable === null) throw "sort_elements not in html";
+			const currentMatch = getQueryObject()["match"];
+			console.log("currentMatch: " + currentMatch);
 
 			for (let i = 0; i < rankings.length; i++) {
 				const ranking = rankings[i];
@@ -65,8 +67,16 @@ function onTeamClick(teamNumber){
 				const coolTD = document.createElement("td");
 				const extraTD = document.createElement("td");
 				rankTD.innerText = "" + rankNumber;
+				let allianceString = "";
+				if(ranking.blueMatches.includes(currentMatch) || ranking.blueMatchesUnplayed.includes(currentMatch)){
+				    allianceString = " b";
+				} else if(ranking.redMatches.includes(currentMatch) || ranking.redMatchesUnplayed.includes(currentMatch)){
+					allianceString = " r";
+				}
+				console.log(ranking.blueMatches);
+				console.log(ranking.redMatches);
 				// teamTD.innerText = "" + teamNumber;
-				teamTD.innerHTML = "<a onclick='onTeamClick(" + teamNumber + ")'>" + teamNumber + "</a>";
+				teamTD.innerHTML = "<a onclick='onTeamClick(" + teamNumber + ")'>" + teamNumber + "</a>" + allianceString;
 				teamTD.style.fontWeight = "bold";
 				recordTD.innerText = ranking.getTotalRecordString();
 				teleopTD.innerText = "" + ranking.telopPointsTotal;

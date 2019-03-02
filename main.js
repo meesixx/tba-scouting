@@ -66,6 +66,9 @@ function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
 	request.setRequestHeader("X-TBA-Auth-Key", authKey);
 	request.send();
 }
+function getTeamMatches(teamNumber, year, authKey, successFunction, errorFunction=null){
+	getJsonData("team/frc" + teamNumber + "/matches/" + year, authKey, successFunction, errorFunction);
+}
 
 /**
  * Gets the data from everything after the "?" in the url
@@ -329,18 +332,29 @@ function getEventDate(event){
 	return new Date(+split[0], +split[1], +split[2]);
 }
 function createRobotRanking(year, teamNumber, matches){
+	const filteredMatches = [];
+	const unplayedMatches = [];
+	for(const match of matches){
+		if(match.post_result_time !== null || match.winning_alliance !== ""){ // check if the match actually happened
+			filteredMatches.push(match);
+		} else {
+			unplayedMatches.push(match);
+		}
+	    // console.log("key: " + match.key + " post_result_time: " + match.post_result_time);
+		// console.log(match);
+	}
 	switch(year){
 		case 2018:
-			return new RobotRanking2018(teamNumber, matches);
+			return new RobotRanking2018(teamNumber, filteredMatches, unplayedMatches);
 		case 2019:
-			return new RobotRanking2019(teamNumber, matches);
+			return new RobotRanking2019(teamNumber, filteredMatches, unplayedMatches);
 	}
-	return new RobotRanking(teamNumber, matches);
+	return new RobotRanking(teamNumber, filteredMatches, unplayedMatches);
 }
 
 
 class RobotRanking extends Object{
-	constructor(teamNumber, matches){
+	constructor(teamNumber, matches, unplayedMatches){
 		super();
 		this.teamNumber = teamNumber;
 		this.teamKey = "frc" + teamNumber;
@@ -376,12 +390,30 @@ class RobotRanking extends Object{
 		this.successAutoRunCount = 0;
 		this.unknownAutoRunCount = 0; // Amount of auto runs we don't have data on. Usually == totalMatches - countableMatches but use this for more accuracy
 
-		for(let match of matches){
-			let matchEventKey = match.event_key;
+        this.blueMatches = [];
+        this.redMatches = [];
+        this.blueMatchesUnplayed = [];
+        this.redMatchesUnplayed = [];
+        for(const match of unplayedMatches){
+			const isOnBlue = this.isRobotBlue(match);
+			if(isOnBlue){
+				this.blueMatchesUnplayed.push(match.key);
+			} else {
+				this.redMatchesUnplayed.push(match.key);
+			}
+		}
+
+		for(const match of matches){
+			const matchEventKey = match.event_key;
 			if(!this.eventsAttendedKeys.includes(matchEventKey)){
 				this.eventsAttendedKeys.push(matchEventKey);
 			}
-			let isOnBlue = this.isRobotBlue(match);
+			const isOnBlue = this.isRobotBlue(match);
+			if(isOnBlue){
+				this.blueMatches.push(match.key);
+			} else {
+				this.redMatches.push(match.key);
+			}
 
 			let teamBreakdown = null;
 			if(match.score_breakdown !== null){
@@ -518,8 +550,8 @@ class RobotRanking extends Object{
 
 }
 class RobotRanking2018 extends RobotRanking{
-	constructor(teamNumber, matches){
-		super(teamNumber, matches);
+	constructor(teamNumber, matches, unplayedMatches){
+		super(teamNumber, matches, unplayedMatches);
 		/** The number of matches that affected these rankings (if a match had no score_breakdown, it wouldn't count as a "countable match" */
 
 		this.endgameNothingTotal = 0; // "None"
@@ -755,8 +787,8 @@ const ROCKET_LEVEL1_SLOTS = ["lowLeftRocketFar", "lowLeftRocketNear", "lowRightR
 const ALL_ROCKET_SLOTS = ROCKET_LEVEL1_SLOTS.concat(ROCKET_LEVEL2_SLOTS).concat(ROCKET_LEVEL3_SLOTS);
 
 class RobotRanking2019 extends RobotRanking{
-	constructor(teamNumber, matches){
-		super(teamNumber, matches);
+	constructor(teamNumber, matches, unplayedMatches){
+		super(teamNumber, matches, unplayedMatches);
 		console.log("teamNumber: " + teamNumber);
 		this.endgame1 = 0;
 		this.endgame2 = 0;
@@ -883,7 +915,7 @@ class RobotRanking2019 extends RobotRanking{
 				} else {
 			    	throw new Error();
 				}
-			    console.log(level + " rocketSlot: " + rocketSlot);
+			    // console.log(level + " rocketSlot: " + rocketSlot);
 				const value = teamBreakdown[rocketSlot];
 			    switch(value){
 					case "Panel":
@@ -960,4 +992,62 @@ class RobotRanking2019 extends RobotRanking{
 		return this.allianceRocket3CargoPlaced + " (" + prettyPercent(this.allianceRocket3CargoPlaced / (this.allianceRocket3CargoPlaced + this.allianceRocket3CargoMissed)) + ")";
 	}
 	// endregion
+	rank(){
+		const cool = [];
+		const special = [];
+
+		let r = 0;
+
+		const level3Percentage = this.endgame3 / (this.endgameNone + this.endgame1 + this.endgame2 + this.endgame3);
+		if(level3Percentage > .4){
+			special.push("Level 3 Climb");
+		}
+		r += Math.round(7 * level3Percentage);
+		const level2Percentage = this.endgame2 / (this.endgameNone + this.endgame1 + this.endgame2 + this.endgame3);
+		if(level2Percentage > .4){
+			cool.push("Level 2 Climb");
+		}
+		r += Math.round(4 * level2Percentage);
+
+		r -= this.endgameNone * 2;
+
+		r -= this.crossNever * 3;
+
+		r -= this.crossTeleop * .5;
+
+		const rocket3HatchPercentage = this.allianceRocket3HatchesPlaced / Math.max(this.allianceRocket3HatchesPlaced + this.allianceRocket3HatchesMissed, 1);
+		r += 10 * rocket3HatchPercentage;
+		if(rocket3HatchPercentage > .25){
+			cool.push("Rocket lv3 Hatch");
+		}
+		const rocket3CargoPercentage = this.allianceRocket3CargoPlaced / Math.max(this.allianceRocket3CargoPlaced + this.allianceRocket3CargoMissed, 1);
+		r += 15 * rocket3CargoPercentage;
+		if(rocket3CargoPercentage > .2){
+			special.push("Rocket lv3 Cargo");
+		}
+
+		const shipHatchPercentage = this.allianceCargoShipHatchesPlaced / Math.max(this.allianceCargoShipHatchesPlaced + this.allianceCargoShipHatchesMissed);
+		r += 2 * shipHatchPercentage;
+		if(shipHatchPercentage > .7){
+			cool.push("Cargo Ship Hatch Placement");
+		}
+
+		const shipCargoPercentage = this.allianceCargoShipCargoPlaced / Math.max(this.allianceCargoShipCargoPlaced + this.allianceCargoShipCargoMissed, 1);
+		r += 5 * shipCargoPercentage;
+		if(shipCargoPercentage > .5){
+			special.push("Cargo Ship Great Cargo");
+		}
+
+		const start2CrossPercentage = this.startLevel2AndCross / (this.startLevel2AndCross + this.startOther);
+		if(!isNaN(start2CrossPercentage)){
+			r += 5 * start2CrossPercentage;
+			if(start2CrossPercentage > .5){
+				cool.push("Start Level 2");
+			}
+		}
+
+		r += Math.round(5 * this.totalWins / this.totalLosses);
+		r += Math.round(this.rankingPointsTotal / 10.0);
+		return [r, cool, special];
+	}
 }

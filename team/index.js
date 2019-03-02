@@ -44,7 +44,7 @@ function updateTeamData(){
 		// setTagsTextToNull();
 	});
 
-	getJsonData("team/frc" + teamNumber + "/matches/" + year, authKey, function(jsonObject){
+	getTeamMatches(teamNumber, year, authKey, function(jsonObject){
 	    console.log("logging json object. The year is: " + year);
 		console.log(jsonObject);
 		const robotRanking = createRobotRanking(year, teamNumber, jsonObject);

@@ -1,6 +1,6 @@
 
 function loadNav(relativeHomepage, pageName){
-	const pages = [[".", "Home"], ["team", "Team Stats"], ["sort", "Sort"], ["event", "Event"]];
+	const pages = [[".", "Home"], ["team", "Team Stats"], ["sort", "Sort"], ["event", "Event"], ["match", "Match"]];
 	if(!relativeHomepage){
 		throw "relativeHomepage cannot be blank, null, or undefined. Please use '.' instead of ''.";
 	}
