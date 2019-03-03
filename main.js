@@ -33,6 +33,12 @@ function prettyPercent(percent){
 function prettyDecimal(decimal){
 	return (Math.round(decimal * 10) / 10) + "";
 }
+function realOrZero(number){
+	if(isNaN(number) || !isFinite(number)){
+		return 0;
+	}
+	return number;
+}
 
 function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
 	if(!subUrl){
@@ -960,7 +966,7 @@ class RobotRanking2019 extends RobotRanking{
 		return this.crossSandstorm + " (" + prettyPercent(this.crossSandstorm / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
 	}
 	getMatchesCrossTeleopString(){
-		return this.crossTeleop + " (" + prettyPercent(this.crossSandstorm / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
+		return this.crossTeleop + " (" + prettyPercent(this.crossTeleop / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
 	}
 
 	getAllianceCargoShipHatchesPlacedString(){
@@ -999,54 +1005,89 @@ class RobotRanking2019 extends RobotRanking{
 		let r = 0;
 
 		const level3Percentage = this.endgame3 / (this.endgameNone + this.endgame1 + this.endgame2 + this.endgame3);
-		if(level3Percentage > .4){
-			special.push("Level 3 Climb");
+		if(!isNaN(level3Percentage)) {
+			if (level3Percentage > .4) {
+				special.push("Level 3 Climb");
+			}
+			r += 7 * level3Percentage;
 		}
-		r += Math.round(7 * level3Percentage);
 		const level2Percentage = this.endgame2 / (this.endgameNone + this.endgame1 + this.endgame2 + this.endgame3);
-		if(level2Percentage > .4){
-			cool.push("Level 2 Climb");
+		if(!isNaN(level2Percentage)) {
+			if (level2Percentage > .4) {
+				cool.push("Level 2 Climb");
+			}
+			r += 4 * level2Percentage;
 		}
-		r += Math.round(4 * level2Percentage);
 
-		r -= this.endgameNone * 2;
+		const endgameNonePercentage = this.endgameNone / (this.endgameNone + this.endgame1 + this.endgame2 + this.endgame3);
+
+		if(!isNaN(endgameNonePercentage)) {
+			r -= 10 * endgameNonePercentage; // max of -10 points
+		}
 
 		r -= this.crossNever * 3;
 
 		r -= this.crossTeleop * .5;
 
-		const rocket3HatchPercentage = this.allianceRocket3HatchesPlaced / Math.max(this.allianceRocket3HatchesPlaced + this.allianceRocket3HatchesMissed, 1);
-		r += 10 * rocket3HatchPercentage;
-		if(rocket3HatchPercentage > .25){
-			cool.push("Rocket lv3 Hatch");
-		}
-		const rocket3CargoPercentage = this.allianceRocket3CargoPlaced / Math.max(this.allianceRocket3CargoPlaced + this.allianceRocket3CargoMissed, 1);
-		r += 15 * rocket3CargoPercentage;
-		if(rocket3CargoPercentage > .2){
-			special.push("Rocket lv3 Cargo");
-		}
+		for(const obj of [
+			{
+				level: 1,
+				hatchMultiplier: 2,
+				cargoMultiplier: 4.5
+			},
+			{
+				level: 2,
+				hatchMultiplier: 6,
+				cargoMultiplier: 8.5
+			},
+			{
+				level: 3,
+				hatchMultiplier: 10,
+				cargoMultiplier: 15
+			}
+		]){
+			const level = obj.level;
 
-		const shipHatchPercentage = this.allianceCargoShipHatchesPlaced / Math.max(this.allianceCargoShipHatchesPlaced + this.allianceCargoShipHatchesMissed);
-		r += 2 * shipHatchPercentage;
-		if(shipHatchPercentage > .7){
-			cool.push("Cargo Ship Hatch Placement");
-		}
+		    const hatchesPlaced = this["allianceRocket" + level + "HatchesPlaced"];
+		    const hatchesMissed = this["allianceRocket" + level + "HatchesMissed"];
+			const rocketHatchPercentage = hatchesPlaced / Math.max(hatchesPlaced + hatchesMissed, 1);
+			r += obj.hatchMultiplier * rocketHatchPercentage;
+			if(rocketHatchPercentage >= .4){
+				special.push("GREAT Rocket lv" + level + " Hatch");
+			} else if(rocketHatchPercentage >= .25){
+				cool.push("Rocket lv" + level + " Hatch");
+			}
 
-		const shipCargoPercentage = this.allianceCargoShipCargoPlaced / Math.max(this.allianceCargoShipCargoPlaced + this.allianceCargoShipCargoMissed, 1);
-		r += 5 * shipCargoPercentage;
-		if(shipCargoPercentage > .5){
-			special.push("Cargo Ship Great Cargo");
-		}
-
-		const start2CrossPercentage = this.startLevel2AndCross / (this.startLevel2AndCross + this.startOther);
-		if(!isNaN(start2CrossPercentage)){
-			r += 5 * start2CrossPercentage;
-			if(start2CrossPercentage > .5){
-				cool.push("Start Level 2");
+			const cargoPlaced = this["allianceRocket" + level + "CargoPlaced"];
+			const cargoMissed = this["allianceRocket" + level + "CargoMissed"];
+			const rocketCargoPercentage = cargoPlaced / Math.max(cargoPlaced + cargoMissed, 1);
+			r += obj.cargoMultiplier * rocketCargoPercentage;
+			if(rocketCargoPercentage >= .35){
+				special.push("AMAZING Rocket lv" + level + " Cargo");
+			} else if(rocketCargoPercentage >= .17){
+				cool.push("Rocket lv" + level + " Cargo");
 			}
 		}
 
-		r += Math.round(5 * this.totalWins / this.totalLosses);
+		const shipHatchPercentage = this.allianceCargoShipHatchesPlaced / Math.max(this.allianceCargoShipHatchesPlaced + this.allianceCargoShipHatchesMissed, 1);
+        r += 2 * shipHatchPercentage;
+        if (shipHatchPercentage > .7) {
+            cool.push("Cargo Ship Hatch Placement");
+        }
+
+		const shipCargoPercentage = this.allianceCargoShipCargoPlaced / Math.max(this.allianceCargoShipCargoPlaced + this.allianceCargoShipCargoMissed, 1);
+        r += 5 * shipCargoPercentage;
+        if (shipCargoPercentage > .5) {
+            special.push("Cargo Ship Great Cargo");
+        }
+
+		const start2CrossPercentage = this.startLevel2AndCross / Math.max(this.startLevel2AndCross + this.startOther, 1);
+        r += 5 * start2CrossPercentage;
+        if(start2CrossPercentage > .5){
+            cool.push("Start Level 2");
+        }
+
+		r += realOrZero(Math.round(5 * this.totalWins / this.totalLosses));
 		r += Math.round(this.rankingPointsTotal / 10.0);
 		return [r, cool, special];
 	}

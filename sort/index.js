@@ -63,6 +63,7 @@ function onTeamClick(teamNumber){
 				const rankTD = document.createElement("td");
 				const recordTD = document.createElement("td");
 				const teleopTD = document.createElement("td");
+				const customRankTD = document.createElement("td");
 				const teamTD = document.createElement("td");
 				const coolTD = document.createElement("td");
 				const extraTD = document.createElement("td");
@@ -81,12 +82,14 @@ function onTeamClick(teamNumber){
 				recordTD.innerText = ranking.getTotalRecordString();
 				teleopTD.innerText = "" + ranking.telopPointsTotal;
 				teleopTD.align = "right";
+				customRankTD.innerText = prettyDecimal(ranking.rank()[0]);
 				coolTD.innerText = rankArray[1].join(", ");
 				extraTD.innerText = rankArray[2].join(", ");
 				row.appendChild(rankTD);
 				row.appendChild(teamTD);
 				row.appendChild(recordTD);
 				row.appendChild(teleopTD);
+				row.appendChild(customRankTD);
 				row.appendChild(coolTD);
 				row.appendChild(extraTD);
 
