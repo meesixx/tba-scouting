@@ -709,12 +709,14 @@ class RobotRanking2018 extends RobotRanking{
 			cool.push("moves at end");
 		}
 
-		let losses = this.totalLosses;
-		if(losses < 3){ // you need to rack up wins for this to do anything
-			losses = 3;
-		}
-		r += Math.round(5 * this.totalWins / losses);
-		r += Math.round(this.rankingPointsTotal / 10.0);
+		// let losses = this.totalLosses;
+		// if(losses < 3){ // you need to rack up wins for this to do anything
+		// 	losses = 3;
+		// }
+		// r += Math.round(5 * this.totalWins / losses);
+		// r += Math.round(this.rankingPointsTotal / 10.0);
+		r += realOrZero(7 * this.totalWins / (this.totalWins + this.totalLosses)); // add a max of 7 points
+		r += this.rankingPointsTotal / 10.0;
 		return [r, cool, special];
 	}
 	getClimbPercent(){
@@ -1087,8 +1089,8 @@ class RobotRanking2019 extends RobotRanking{
             cool.push("Start Level 2");
         }
 
-		r += realOrZero(Math.round(5 * this.totalWins / this.totalLosses));
-		r += Math.round(this.rankingPointsTotal / 10.0);
+		r += realOrZero(7 * this.totalWins / (this.totalWins + this.totalLosses)); // add a max of 7 points
+		r += this.rankingPointsTotal / 10.0;
 		return [r, cool, special];
 	}
 }
