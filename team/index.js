@@ -16,11 +16,16 @@ function updateTeamData(){
     const authKey = requestAuthKey();
     const year = getDesiredYear();
     console.log("Updating data for : " + teamNumber);
+    const codeGithub = "https://github.com/retrodaredevil/frc-code-database/tree/master/frc/" + teamNumber;
+    for (const link of document.getElementsByClassName("database_github")) {
+        link.classList.remove("disable");
+        link.href = codeGithub;
+    }
 
     getJsonData("team/frc" + teamNumber, authKey, function(jsonObject){
         console.log(jsonObject);
         if(jsonObject.Errors !== undefined){
-            for(let error of jsonObject.Errors){
+            for(const error of jsonObject.Errors){
                 console.error(error.team_id);
             }
             setTagsTextToNull();
@@ -32,7 +37,7 @@ function updateTeamData(){
             disableWebsite();
             setClassText("current_team_website_label", "No website");
         } else {
-            for (let link of document.getElementsByClassName("current_team_website_link")) {
+            for (const link of document.getElementsByClassName("current_team_website_link")) {
                 link.classList.remove("disable");
                 link.href = website;
             }
@@ -62,76 +67,82 @@ function updateTeamData(){
         setClassText("countable_matches_played_number", robotRanking.countableMatches);
         let dataArray = [];
         dataArray.push(
-            "Data from: " + robotRanking.eventsAttendedKeys.length + " events. Keys: " + robotRanking.eventsAttendedKeys.join(", "),
-            "",
-            "Win Rate: " + prettyPercent(robotRanking.getWinPercentage()),
-            "Qual Win Rate: " + prettyPercent(robotRanking.getQualWinPercentage()),
-            "Playoff Win Rate: " + prettyPercent(robotRanking.getPlayoffWinPercentage()),
-            "",
-            "(Custom) Ranking Value: " + robotRanking.rank()[0],
+                "Data from: " + robotRanking.eventsAttendedKeys.length + " events. Keys: " + robotRanking.eventsAttendedKeys.join(", "),
+                "",
+                "Win Rate: " + prettyPercent(robotRanking.getWinPercentage()),
+                "Qual Win Rate: " + prettyPercent(robotRanking.getQualWinPercentage()),
+                "Playoff Win Rate: " + prettyPercent(robotRanking.getPlayoffWinPercentage()),
+                "",
+                "(Custom) Ranking Value: " + robotRanking.rank()[0],
         );
         if(robotRanking instanceof RobotRanking2018){
             dataArray.push(
-                "",
-                "Switch Auto: " + (robotRanking.hasSwitchAuto() ? "YES" : "NO"),
-                "Scale Auto: " + (robotRanking.hasScaleAuto() ? "YES" : "NO"),
-                "Average Teleop Scale Ownership: " + prettyPercent(robotRanking.getTeleopScaleOwnershipTimePercent()),
-                "Average Teleop Switch Ownership: " + prettyPercent(robotRanking.getTeleopSwitchOwnershipTimePercent()),
-                "Average Cubes in Vault: " + prettyDecimal(robotRanking.getAverageCubesInVault()),
-                "",
-                "Climb Rate: " + prettyPercent(robotRanking.getClimbPercent()),
-                "Total Climbs: " + robotRanking.endgameClimbTotal,
-                "Can Climb: " + (robotRanking.canClimb() ? "YES" : "NO"),
-                "Extra Robots When Climbing: " + robotRanking.extraSupportedRobotsWhileClimbing(),
-                "",
-                "Auto Switch Success Rate: " + prettyPercent(robotRanking.getAutoSwitchSuccessPercent()),
-                "Auto Scale Success Rate: " + prettyPercent(robotRanking.getAutoScaleSuccessPercent()),
-                "Number Double Climbs: " + robotRanking.numberDoubleClimbs,
-                "Number Triple Climbs: " + robotRanking.numberTripleClimbs
+                    "",
+                    "Switch Auto: " + (robotRanking.hasSwitchAuto() ? "YES" : "NO"),
+                    "Scale Auto: " + (robotRanking.hasScaleAuto() ? "YES" : "NO"),
+                    "Average Teleop Scale Ownership: " + prettyPercent(robotRanking.getTeleopScaleOwnershipTimePercent()),
+                    "Average Teleop Switch Ownership: " + prettyPercent(robotRanking.getTeleopSwitchOwnershipTimePercent()),
+                    "Average Cubes in Vault: " + prettyDecimal(robotRanking.getAverageCubesInVault()),
+                    "",
+                    "Climb Rate: " + prettyPercent(robotRanking.getClimbPercent()),
+                    "Total Climbs: " + robotRanking.endgameClimbTotal,
+                    "Can Climb: " + (robotRanking.canClimb() ? "YES" : "NO"),
+                    "Extra Robots When Climbing: " + robotRanking.extraSupportedRobotsWhileClimbing(),
+                    "",
+                    "Auto Switch Success Rate: " + prettyPercent(robotRanking.getAutoSwitchSuccessPercent()),
+                    "Auto Scale Success Rate: " + prettyPercent(robotRanking.getAutoScaleSuccessPercent()),
+                    "Number Double Climbs: " + robotRanking.numberDoubleClimbs,
+                    "Number Triple Climbs: " + robotRanking.numberTripleClimbs
             );
 
         } else if(robotRanking instanceof RobotRanking2019){
             dataArray.push(
-                "",
-                "Matches Dead: " + robotRanking.getMatchesDeadString(),
-                "Cross in Sandstorm: " + robotRanking.getMatchesCrossSandstormString(),
-                "Cross in Teleop: " + robotRanking.getMatchesCrossTeleopString(),
-                "",
-                "Start and Cross Level 2: " + robotRanking.startLevel2AndCross,
-                "Start Level 1 or Never Cross: " + robotRanking.startOther,
-                "",
-                "Endgame Level 1: " + robotRanking.getEndgameLevel1String(),
-                "Endgame Level 2: " + robotRanking.getEndgameLevel2String(),
-                "Endgame Level 3: " + robotRanking.getEndgameLevel3String(),
-                "Endgame None: " + robotRanking.getEndgameNoneString(),
-                "",
-                "Alliance Cargo Ship Hatches Placed: " + robotRanking.getAllianceCargoShipHatchesPlacedString(),
-                "Alliance Cargo Ship Cargo Placed: " + robotRanking.getAllianceCargoShipCargoPlacedString(),
-                "",
-                "",
-                "Alliance Rocket 1 Hatches Placed: " + robotRanking.getAllianceLevel1RocketHatchesString(),
-                "Alliance Rocket 1 Cargo Placed: " + robotRanking.getAllianceLevel1RocketCargoString(),
-                "",
-                "Alliance Rocket 2 Hatches Placed: " + robotRanking.getAllianceLevel2RocketHatchesString(),
-                "Alliance Rocket 2 Cargo Placed: " + robotRanking.getAllianceLevel2RocketCargoString(),
-                "",
-                "Alliance Rocket 3 Hatches Placed: " + robotRanking.getAllianceLevel3RocketHatchesString(),
-                "Alliance Rocket 3 Cargo Placed: " + robotRanking.getAllianceLevel3RocketCargoString(),
-                "",
+                    "",
+                    "Matches Dead: " + robotRanking.getMatchesDeadString(),
+                    "Cross in Sandstorm: " + robotRanking.getMatchesCrossSandstormString(),
+                    "Cross in Teleop: " + robotRanking.getMatchesCrossTeleopString(),
+                    "",
+                    "Start and Cross Level 2: " + robotRanking.startLevel2AndCross,
+                    "Start Level 1 or Never Cross: " + robotRanking.startOther,
+                    "",
+                    "Endgame Level 1: " + robotRanking.getEndgameLevel1String(),
+                    "Endgame Level 2: " + robotRanking.getEndgameLevel2String(),
+                    "Endgame Level 3: " + robotRanking.getEndgameLevel3String(),
+                    "Endgame None: " + robotRanking.getEndgameNoneString(),
+                    "",
+                    "Alliance Cargo Ship Hatches Placed: " + robotRanking.getAllianceCargoShipHatchesPlacedString(),
+                    "Alliance Cargo Ship Cargo Placed: " + robotRanking.getAllianceCargoShipCargoPlacedString(),
+                    "",
+                    "",
+                    "Alliance Rocket 1 Hatches Placed: " + robotRanking.getAllianceLevel1RocketHatchesString(),
+                    "Alliance Rocket 1 Cargo Placed: " + robotRanking.getAllianceLevel1RocketCargoString(),
+                    "",
+                    "Alliance Rocket 2 Hatches Placed: " + robotRanking.getAllianceLevel2RocketHatchesString(),
+                    "Alliance Rocket 2 Cargo Placed: " + robotRanking.getAllianceLevel2RocketCargoString(),
+                    "",
+                    "Alliance Rocket 3 Hatches Placed: " + robotRanking.getAllianceLevel3RocketHatchesString(),
+                    "Alliance Rocket 3 Cargo Placed: " + robotRanking.getAllianceLevel3RocketCargoString(),
+                    "",
+            );
+        } else if(robotRanking instanceof RobotRanking2020){
+            dataArray.push(
+                    "",
+                    "Endgame Hang: " + robotRanking.getEndgameHangString(),
+                    "Endgame Park: " + robotRanking.getEndgameParkString(),
+                    "Endgame None: " + robotRanking.getEndgameNoneString(),
             );
         }
         dataArray.push(
-            "",
-            "Ranking Points: " + robotRanking.rankingPointsTotal,
-            "",
-            "",
-            "Auto Points Average: " + prettyDecimal(robotRanking.autoPointsTotal / robotRanking.countableMatches),
-            "Teleop Points Average: " + prettyDecimal(robotRanking.telopPointsTotal / robotRanking.countableMatches),
-            "Foul Points Average: " + prettyDecimal(robotRanking.foulPointsReceivedTotal / robotRanking.countableMatches),
-            "Total Points Average: " + prettyDecimal(robotRanking.totalPointsTotal / robotRanking.countableMatches)
+                "",
+                "Ranking Points: " + robotRanking.rankingPointsTotal,
+                "",
+                "",
+                "Auto Points Average: " + prettyDecimal(robotRanking.autoPointsTotal / robotRanking.countableMatches),
+                "Teleop Points Average: " + prettyDecimal(robotRanking.telopPointsTotal / robotRanking.countableMatches),
+                "Foul Points Average: " + prettyDecimal(robotRanking.foulPointsReceivedTotal / robotRanking.countableMatches),
+                "Total Points Average: " + prettyDecimal(robotRanking.totalPointsTotal / robotRanking.countableMatches)
         );
-        let dataString = dataArray.join("<br/>");
-        console.log("hi");
+        const dataString = dataArray.join("<br/>");
         setIdHtml("additional_team_data", dataString);
     }, function(){
         console.error("Was unable to get matches.");
@@ -141,7 +152,7 @@ function updateTeamData(){
         let eventsInfo = "(" + jsonObject.length + ") ";
         console.log(jsonObject);
 
-        let eventsArray = jsonObject;
+        const eventsArray = jsonObject;
         eventsArray.sort(function(event, event2){
             return +getEventDate(event) - +getEventDate(event2);
         });
@@ -158,7 +169,7 @@ function updateTeamData(){
                 eventsInfo += ", ";
             }
         }
-        setClassHTML("events_attended", eventsInfo);
+        setClassHtml("events_attended", eventsInfo);
     }, function(){
         console.error("Got error when getting events.");
     });

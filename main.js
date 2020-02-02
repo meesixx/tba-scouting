@@ -201,7 +201,7 @@ function setClassText(clazz, text){
     }
     return r;
 }
-function setClassHTML(clazz, text){
+function setClassHtml(clazz, text){
     if(clazz === undefined || text === undefined) throw "You must pass both id, and text.";
 
     if(text === null) {
@@ -360,7 +360,7 @@ function createRobotRanking(year, teamNumber, matches){
 }
 
 
-class RobotRanking extends Object{
+class RobotRanking extends Object {
     constructor(teamNumber, matches, unplayedMatches){
         super();
         this.teamNumber = teamNumber;
@@ -424,11 +424,14 @@ class RobotRanking extends Object{
 
             let teamBreakdown = null;
             if(match.score_breakdown !== null){
+                if(match.score_breakdown === undefined){
+                    throw "Score breakdown was undefined! This should not happen!";
+                }
                 this.countableMatches++;
                 teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
                 this.rankingPointsTotal += teamBreakdown.rp;
             }
-            let isPlayoff = match.comp_level !== "qm";
+            const isPlayoff = match.comp_level !== "qm";
             if(isPlayoff){
                 this.playoffMatches++;
             } else {
@@ -894,9 +897,6 @@ class RobotRanking2019 extends RobotRanking {
             for(let i = 1; i <= 8; i++){
                 const pre = teamBreakdown["preMatchBay" + i];
                 const post = teamBreakdown["bay" + i];
-                // console.log(i);
-                // console.log(pre);
-                // console.log(post);
                 if(post !== "Unknown") {
                     if (pre !== "Panel" && pre !== "Unknown") {
                         if (post === "Panel" || post === "PanelAndCargo") {
@@ -923,7 +923,6 @@ class RobotRanking2019 extends RobotRanking {
                 } else {
                     throw new Error();
                 }
-                // console.log(level + " rocketSlot: " + rocketSlot);
                 const value = teamBreakdown[rocketSlot];
                 switch(value){
                     case "Panel":
@@ -948,6 +947,7 @@ class RobotRanking2019 extends RobotRanking {
         }
     }
 
+    // region endgame
     getEndgameLevel1String(){
         return this.endgame1 + " (" + prettyPercent(this.endgame1 / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
     }
@@ -960,7 +960,9 @@ class RobotRanking2019 extends RobotRanking {
     getEndgameNoneString(){
         return this.endgameNone + " (" + prettyPercent(this.endgameNone / (this.endgame1 + this.endgame2 + this.endgame3 + this.endgameNone)) + ")";
     }
+    // endregion
 
+    // region crossing
     getMatchesDeadString(){
         return this.crossNever + " (" + prettyPercent(this.crossNever / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
     }
@@ -970,13 +972,16 @@ class RobotRanking2019 extends RobotRanking {
     getMatchesCrossTeleopString(){
         return this.crossTeleop + " (" + prettyPercent(this.crossTeleop / (this.crossNever + this.crossTeleop + this.crossSandstorm)) + ")";
     }
+    // endregion
 
+    //region cargo
     getAllianceCargoShipHatchesPlacedString(){
         return this.allianceCargoShipHatchesPlaced + " (" + prettyPercent(this.allianceCargoShipHatchesPlaced / (this.allianceCargoShipHatchesPlaced + this.allianceCargoShipHatchesMissed)) + ")";
     }
     getAllianceCargoShipCargoPlacedString(){
         return this.allianceCargoShipCargoPlaced + " (" + prettyPercent(this.allianceCargoShipCargoPlaced / (this.allianceCargoShipCargoPlaced + this.allianceCargoShipCargoMissed)) + ")";
     }
+    //endregion
 
     // region rocket
     getAllianceLevel1RocketHatchesString(){
@@ -1097,6 +1102,69 @@ class RobotRanking2019 extends RobotRanking {
 
 class RobotRanking2020 extends RobotRanking {
     constructor(teamNumber, matches, unplayedMatches) {
-        super(teamNumber, matches, unplayedMatches)
+        super(teamNumber, matches, unplayedMatches);
+        this.endgameNone = 0;
+        this.endgamePark = 0;
+        this.endgameHang = 0;
+
+        this.levelHangs = 0;
+        this.notLevelHangs = 0;
+        this.singleLevelHangs = 0;
+        this.singleNotLevelHangs = 0;
+        this.doubleLevelHangs = 0;
+        this.doubleNotLevelHangs = 0;
+        this.tripleLevelHangs = 0;
+        this.tripleNotLevelHangs = 0;
+
+        for(const match of matches){
+            if(match.score_breakdown === null){
+                continue;
+            }
+            const isOnBlue = this.isRobotBlue(match);
+            const teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
+            const robotNumber = this.getRobotNumber(match);
+            const initLine = teamBreakdown["initLineRobot" + robotNumber]; // Unknown, None, Exited
+            const endgame = teamBreakdown["endgameRobot" + robotNumber]; // Unknown, None, Park, Hang
+            switch(endgame) {
+                case "None":
+                    this.endgameNone++;
+                    break;
+                case "Park":
+                    this.endgamePark++;
+                    break;
+                case "Hang":
+                    this.endgameHang++;
+                    const levelEnum = teamBreakdown.endgameRungIsLevel;
+                    switch(levelEnum){
+                        case "IsLevel":
+                            this.levelHangs++;
+                            break;
+                        case "NotLevel":
+                            this.notLevelHangs++;
+                            break;
+                        case "Unknown":
+                            console.log("Rung Is Level is unknown when this robot climbed...");
+                            break;
+                        default:
+                            console.log("Unknown level enum: " + levelEnum);
+                            break;
+                    }
+                    break;
+                case "Unknown":
+                    break;
+                default:
+                    console.log("Unknown endgame: " + endgame);
+                    break;
+            }
+        }
+    }
+    getEndgameHangString(){
+        return this.endgameHang + "(" + prettyPercent(this.endgameHang / (this.endgameNone + this.endgamePark + this.endgameHang)) + ")";
+    }
+    getEndgameParkString(){
+        return this.endgamePark + "(" + prettyPercent(this.endgamePark / (this.endgameNone + this.endgamePark + this.endgameHang)) + ")";
+    }
+    getEndgameNoneString(){
+        return this.endgameNone + "(" + prettyPercent(this.endgameNone / (this.endgameNone + this.endgamePark + this.endgameHang)) + ")";
     }
 }
