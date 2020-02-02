@@ -1,19 +1,19 @@
 html, body{
-	background-color: #3bb7ff;
-	color: #FFFFFF;
-	margin: 0;
+    background-color: #3bb7ff;
+    color: #FFFFFF;
+    margin: 0;
 }
 hr{
-	background-color: transparent;
-	/*border-color: #FFFFFF;*/
-	border-top: 1px solid #FFFFFF;
+    background-color: transparent;
+    /*border-color: #FFFFFF;*/
+    border-top: 1px solid #FFFFFF;
 }
 h1, h2, h3 {
-	text-align: center;
+    text-align: center;
 }
 a.disable{
-	pointer-events: none;
-	cursor: default;
+    pointer-events: none;
+    cursor: default;
 }
 
 /* The classes defined here are usually for setting innerText and to keep track of them. */
@@ -36,48 +36,48 @@ a.disable{
 #additional_team_data{ }
 
 .input_div{
-	width: 100%;
-	text-align:center;
+    width: 100%;
+    text-align:center;
 }
 .text_div{
-	margin: 0 auto;
-	width: 800px;
+    margin: 0 auto;
+    width: 800px;
 }
 
 #team_number_input, #event_code_input, #year_input{
-	height: 80px;
-	background-color: rgba(100%, 100%, 100%, .2);
-	font-size: 60px;
-	text-align: center;
-	color: #ff5238;
+    height: 80px;
+    background-color: rgba(100%, 100%, 100%, .2);
+    font-size: 60px;
+    text-align: center;
+    color: #ff5238;
 }
 #team_number_input, #year_input{
-	width: 200px;
+    width: 200px;
 }
 #event_code_input{
-	width:400px;
+    width:400px;
 }
 #nav_table{
-	width: 100%;
-	border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 #nav_table th{
-	height: 50px;
-	vertical-align: center;
+    height: 50px;
+    vertical-align: center;
 }
 #nav_table th.current_nav{
-	border-left: solid 1px #FFFFFF;
-	border-right: solid 1px #FFFFFF;
+    border-left: solid 1px #FFFFFF;
+    border-right: solid 1px #FFFFFF;
 }
 #nav_table th:not(.current_nav){
-	border-bottom: solid 1px #FFFFFF;
-	background-color: rgba(0,0,0, .2);
-	cursor: pointer;
+    border-bottom: solid 1px #FFFFFF;
+    background-color: rgba(0,0,0, .2);
+    cursor: pointer;
 }
 #nav_table th:hover{
-	background-color: rgba(0,0,0, .3);
+    background-color: rgba(0,0,0, .3);
 }
 #nav_table th.current_nav{
-	background-color: rgba(0,0,0, .3);
-	border-bottom: none;
+    background-color: rgba(0,0,0, .3);
+    border-bottom: none;
 }

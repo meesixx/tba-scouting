@@ -1,27 +1,27 @@
 
 
 #sort_table {
-	border-collapse: collapse;
+    border-collapse: collapse;
 }
 #sort_table th{
-	border: solid 1px #FFFFFF;
-	height: 50px;
+    border: solid 1px #FFFFFF;
+    height: 50px;
 }
 #sort_table td{
-	border: solid 1px #FFFFFF;
-	padding: 5px;
+    border: solid 1px #FFFFFF;
+    padding: 5px;
 }
 #sort_table th{
-	padding: 5px;
+    padding: 5px;
 }
 #sort_table tr:nth-child(even){
-	background-color: rgba(100%, 100%, 100%, .1);
+    background-color: rgba(100%, 100%, 100%, .1);
 }
 #sort_table tr:hover{
-	background-color: rgba(100%, 100%, 100%, .4);
-	color: #878787;
+    background-color: rgba(100%, 100%, 100%, .4);
+    color: #878787;
 }
 
 #sort_table{
-	width: 100%;
+    width: 100%;
 }

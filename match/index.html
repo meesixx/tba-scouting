@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<link rel="stylesheet" type="text/css" href="../global.css"/>
-		<link rel="stylesheet" type="text/css" href="index.css"/>
-		<title>Match</title>
-		<script src="../main.js"></script>
-	</head>
-	<body>
-		<script src="../loadnav.js"></script>
-		<script>loadNav("..", "match")</script>
-		<h1>Match</h1>
-		<div class="teams_input_div">
-			<input type="text" id="match_code_input" onkeydown="onMatchCodeEnter(event, this)" placeholder=""/>
-		</div>
-		<h2>Match Key: <span id="match_key">ERROR</span></h2>
-		<h2>Event: <span id="event_key">ERROR</span></h2>
-		<h2>Match Name: <span id="match_name">ERROR</span></h2>
-		<h2><span id="date">ERROR</span></h2>
-		<h2>Blue: <span id="blue_alliance">ERROR</span></h2>
-		<h2>Red: <span id="red_alliance">ERROR</span></h2>
-		<div id="button_div">
-			<button onclick="sortTeams();">SORT TEAMS</button>
-		</div>
+    <head>
+        <link rel="stylesheet" type="text/css" href="../global.css"/>
+        <link rel="stylesheet" type="text/css" href="index.css"/>
+        <title>Match</title>
+        <script src="../main.js"></script>
+    </head>
+    <body>
+        <script src="../loadnav.js"></script>
+        <script>loadNav("..", "match")</script>
+        <h1>Match</h1>
+        <div class="teams_input_div">
+            <input type="text" id="match_code_input" onkeydown="onMatchCodeEnter(event, this)" placeholder=""/>
+        </div>
+        <h2>Match Key: <span id="match_key">ERROR</span></h2>
+        <h2>Event: <span id="event_key">ERROR</span></h2>
+        <h2>Match Name: <span id="match_name">ERROR</span></h2>
+        <h2><span id="date">ERROR</span></h2>
+        <h2>Blue: <span id="blue_alliance">ERROR</span></h2>
+        <h2>Red: <span id="red_alliance">ERROR</span></h2>
+        <div id="button_div">
+            <button onclick="sortTeams();">SORT TEAMS</button>
+        </div>
 
-		<script src="index.js"></script>
-	</body>
+        <script src="index.js"></script>
+    </body>
 </html>
