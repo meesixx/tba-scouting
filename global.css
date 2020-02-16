@@ -8,7 +8,7 @@ hr{
     /*border-color: #FFFFFF;*/
     border-top: 1px solid #FFFFFF;
 }
-h1, h2, h3 {
+h1, h2, h3, .centered {
     text-align: center;
 }
 a.disable{

@@ -39,6 +39,9 @@ function realOrZero(number){
     }
     return number;
 }
+function getTeamNumberFromKey(teamKey){
+    return +teamKey.slice(3, teamKey.length);
+}
 
 function getJsonData(subUrl, authKey, successFunction, errorFunction=null){
     if(!subUrl){
@@ -143,7 +146,7 @@ function setQueryObject(object){
  * @returns {boolean} false if the current value is equal to the new value or true if a new value was set.
  */
 function setQueryKey(key, value){
-    let object = getQueryObject();
+    const object = getQueryObject();
     if(object[key] === "" + value){
         return false;
     }
@@ -232,6 +235,17 @@ function getCurrentTeamNumber(){
         return null;
     }
     return +currentTeamNumber;
+}
+function setCurrentMatch(matchKey){
+    if(matchKey === undefined) throw "Must pass match key!";
+    setQueryKey("match", matchKey);
+}
+function getCurrentMatch(){
+    const r = getQueryObject()["match"];
+    if(r === undefined){
+        return null;
+    }
+    return r;
 }
 function updateTeamNumberTitle(){
     const number = getCurrentTeamNumber();
@@ -363,6 +377,9 @@ function createRobotRanking(year, teamNumber, matches){
 class RobotRanking extends Object {
     constructor(teamNumber, matches, unplayedMatches){
         super();
+        this.playedMatches = matches;
+        this.unplayedMatches = unplayedMatches;
+
         this.teamNumber = teamNumber;
         this.teamKey = "frc" + teamNumber;
 

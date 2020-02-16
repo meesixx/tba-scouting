@@ -52,7 +52,7 @@ function requestEventTeams(){
             console.log("teamKeys is not iterable");
             return;
         }
-        let teamsHtml = ""
+        let teamsHtml = "";
         for(const teamKey of teamKeys){
             const teamNumber = +teamKey.slice(3, teamKey.length);
             teams.push(teamNumber);

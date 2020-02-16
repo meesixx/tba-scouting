@@ -58,12 +58,12 @@ function requestMatchTeams(){
         let redString = "";
 
         for(const teamKey of match.alliances.blue.team_keys){
-            const team = +teamKey.slice(3, teamKey.length);
+            const team = getTeamNumberFromKey(teamKey);
             teams.push(team);
             blueString += "<a onclick='onTeamClick(" + team + ")'>" + team + "</a>,";
         }
         for(const teamKey of match.alliances.red.team_keys){
-            const team = +teamKey.slice(3, teamKey.length);
+            const team = getTeamNumberFromKey(teamKey);
             teams.push(team);
             redString += "<a onclick='onTeamClick(" + team + ")'>" + team + "</a>,";
         }

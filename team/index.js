@@ -5,6 +5,42 @@ function onTeamTeamNumberEnter(event, inputElement){
         updateTeamData()
     }
 }
+function onTeamClick(teamNumber){
+    setCurrentTeamNumber(teamNumber);
+    location.href = "../team/" + location.search;
+}
+
+function onMatchClick(matchKey) {
+    setCurrentMatch(matchKey);
+    location.href = "../match/" + location.search;
+}
+function getTeamsDisplay(match, teamNumber) {
+    function getTeamsArray(keys) {
+        const teams = [];
+        let onTeam = false;
+        for(const teamKey of keys){
+            const number = getTeamNumberFromKey(teamKey);
+            let teamString;
+            if(number === teamNumber) {
+                onTeam = true;
+                teamString = "<strong>" + number + "</strong>";
+            } else {
+                teamString = "" + number;
+            }
+            teams.push('<a onclick=onTeamClick(' + number + ')>' + teamString + '</a>');
+        }
+        return [teams, onTeam];
+    }
+    const red = getTeamsArray(match.alliances.red.team_keys);
+    const redTeams = red[0];
+    const onRed = red[1];
+    const blueTeams = getTeamsArray(match.alliances.blue.team_keys)[0];
+    if(onRed){
+        return "<a style='color: #ff5238'>Red</a> " + redTeams.join(", ") + " | " + blueTeams.join(", ");
+    } else {
+        return "<a style='color: #0000ff'>Blue</as> " + blueTeams.join(", ") + " | " + redTeams.join(", ");
+    }
+}
 
 function updateTeamData(){
     const teamNumber = getCurrentTeamNumber(); // null or number
@@ -144,6 +180,42 @@ function updateTeamData(){
         );
         const dataString = dataArray.join("<br/>");
         setIdHtml("additional_team_data", dataString);
+        const playedMatches = [].concat(robotRanking.playedMatches);
+        playedMatches.sort(function(a, b) { return b.predicted_time - a.predicted_time});
+        const unplayedMatches = [].concat(robotRanking.unplayedMatches);
+        unplayedMatches.sort(function(a, b) { return b.predicted_time - a.predicted_time});
+        const playedMatchDisplays = [];
+        for(const match of playedMatches){
+            const key = match.key;
+            const onRed = match.alliances.red.team_keys.includes("frc" + teamNumber);
+            let outcomeString;
+            const winningAlliance = match.winning_alliance;
+            if((winningAlliance === "red" && onRed) || (winningAlliance === "blue" && !onRed)){
+                outcomeString = "Win";
+            } else if(winningAlliance === "") {
+                outcomeString = "Tie";
+            } else {
+                outcomeString = "Loss";
+            }
+            let breakdownString;
+            if(match.score_breakdown !== null){
+                const breakdown = onRed ? match.score_breakdown.red : match.score_breakdown.blue;
+                console.log(breakdown);
+                const enemyBreakdown = onRed ? match.score_breakdown.blue : match.score_breakdown.red;
+                breakdownString = (breakdown.total_points || breakdown.totalPoints) + "-" + (enemyBreakdown.total_points || enemyBreakdown.totalPoints);
+            } else {
+                breakdownString = "";
+            }
+
+            playedMatchDisplays.push('<a onclick=onMatchClick("' + key + '")>' + key + "</a>    " + getTeamsDisplay(match, teamNumber) + " | " + outcomeString + " " + breakdownString);
+        }
+        const unplayedMatchDisplays = [];
+        for(const match of unplayedMatches){
+            const key = match.key;
+            unplayedMatchDisplays.push('<a onclick=onMatchClick("' + key + '")>' + key + "</a>    " + getTeamsDisplay(match, teamNumber));
+        }
+        setIdHtml("latest_matches", playedMatchDisplays.length === 0 ? "None!" : playedMatchDisplays.join("<br/>"));
+        setIdHtml("upcoming_matches", unplayedMatchDisplays.length === 0 ? "None!" : unplayedMatchDisplays.join("<br/>"))
     }, function(){
         console.error("Was unable to get matches.");
     });
@@ -192,7 +264,7 @@ function setTagsTextToNull(){
 
 }
 function disableWebsite(){
-    for (let link of document.getElementsByClassName("current_team_website_link")) {
+    for (const link of document.getElementsByClassName("current_team_website_link")) {
         link.href = "";
         link.classList.add("disable");
     }
@@ -203,5 +275,7 @@ function disableWebsite(){
 
     setTagsTextToNull();
     setIdText("additional_team_data", null);
+    setIdText("latest_matches", null);
+    setIdText("upcoming_matches", null);
     updateTeamData()
 })();
