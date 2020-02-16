@@ -14,32 +14,40 @@ function onMatchClick(matchKey) {
     setCurrentMatch(matchKey);
     location.href = "../match/" + location.search;
 }
-function getTeamsDisplay(match, teamNumber) {
+function getBasicMatchTDElements(match, robotRanking) {
     function getTeamsArray(keys) {
         const teams = [];
-        let onTeam = false;
         for(const teamKey of keys){
             const number = getTeamNumberFromKey(teamKey);
             let teamString;
-            if(number === teamNumber) {
-                onTeam = true;
+            if(number === robotRanking.teamNumber) {
                 teamString = "<strong>" + number + "</strong>";
             } else {
                 teamString = "" + number;
             }
             teams.push('<a onclick=onTeamClick(' + number + ')>' + teamString + '</a>');
         }
-        return [teams, onTeam];
+        return teams;
     }
-    const red = getTeamsArray(match.alliances.red.team_keys);
-    const redTeams = red[0];
-    const onRed = red[1];
-    const blueTeams = getTeamsArray(match.alliances.blue.team_keys)[0];
-    if(onRed){
-        return "<a style='color: #ff5238'>Red</a> " + redTeams.join(", ") + " | " + blueTeams.join(", ");
+    const keyTD = document.createElement("td");
+    const colorTD = document.createElement("td");
+    const allianceTD = document.createElement("td");
+    const enemyTD = document.createElement("td");
+    const key = match.key;
+    keyTD.innerHTML = '<a onclick=onMatchClick("' + key + '")>' + key + "</a>";
+
+    const redTeams = getTeamsArray(match.alliances.red.team_keys);
+    const blueTeams = getTeamsArray(match.alliances.blue.team_keys);
+    if (robotRanking.isRobotBlue(match)) {
+        colorTD.innerHTML = "<a style='color: #0000ff'>Blue</a>";
+        allianceTD.innerHTML = blueTeams.join(", ");
+        enemyTD.innerHTML = redTeams.join(", ");
     } else {
-        return "<a style='color: #0000ff'>Blue</as> " + blueTeams.join(", ") + " | " + redTeams.join(", ");
+        colorTD.innerHTML = "<a style='color: #ff5238'>Red</a>";
+        allianceTD.innerHTML = redTeams.join(", ");
+        enemyTD.innerHTML = blueTeams.join(", ");
     }
+    return [keyTD, colorTD, allianceTD, enemyTD];
 }
 
 function updateTeamData(){
@@ -163,6 +171,9 @@ function updateTeamData(){
         } else if(robotRanking instanceof RobotRanking2020){
             dataArray.push(
                     "",
+                    "Init Exit: " + robotRanking.getInitLineExitString(),
+                    "Init None: " + robotRanking.getInitLineNoneString(),
+                    "",
                     "Endgame Hang: " + robotRanking.getEndgameHangString(),
                     "Endgame Park: " + robotRanking.getEndgameParkString(),
                     "Endgame None: " + robotRanking.getEndgameNoneString(),
@@ -184,38 +195,78 @@ function updateTeamData(){
         playedMatches.sort(function(a, b) { return b.predicted_time - a.predicted_time});
         const unplayedMatches = [].concat(robotRanking.unplayedMatches);
         unplayedMatches.sort(function(a, b) { return b.predicted_time - a.predicted_time});
-        const playedMatchDisplays = [];
+        // const playedMatchDisplays = [];
+        const latestMatchesTable = document.getElementById("latest_matches");
+
         for(const match of playedMatches){
-            const key = match.key;
-            const onRed = match.alliances.red.team_keys.includes("frc" + teamNumber);
+            // noinspection DuplicatedCode
+            const row = document.createElement("tr");
+            const basicTDElements = getBasicMatchTDElements(match, robotRanking);
+            const keyTD = basicTDElements[0];
+            const colorTD = basicTDElements[1];
+            const allianceTD = basicTDElements[2];
+            const enemyTD = basicTDElements[3];
+            const resultTD = document.createElement("td");
+            const scoreTD = document.createElement("td");
+            const allianceFoulTD = document.createElement("td");
+            const allianceTechFoulTD = document.createElement("td");
+            const enemyFoulTD = document.createElement("td");
+            const enemyTechFoulTD = document.createElement("td");
+            const extraTD = document.createElement("td");
+
+            const onBlue = robotRanking.isRobotBlue(match);
             let outcomeString;
             const winningAlliance = match.winning_alliance;
-            if((winningAlliance === "red" && onRed) || (winningAlliance === "blue" && !onRed)){
+            if((winningAlliance === "blue" && onBlue) || (winningAlliance === "red" && !onBlue)){
                 outcomeString = "Win";
             } else if(winningAlliance === "") {
                 outcomeString = "Tie";
             } else {
                 outcomeString = "Loss";
             }
-            let breakdownString;
+            resultTD.innerText = outcomeString;
             if(match.score_breakdown !== null){
-                const breakdown = onRed ? match.score_breakdown.red : match.score_breakdown.blue;
-                console.log(breakdown);
-                const enemyBreakdown = onRed ? match.score_breakdown.blue : match.score_breakdown.red;
-                breakdownString = (breakdown.total_points || breakdown.totalPoints) + "-" + (enemyBreakdown.total_points || enemyBreakdown.totalPoints);
-            } else {
-                breakdownString = "";
+                const breakdown = onBlue ? match.score_breakdown.blue : match.score_breakdown.red;
+                const enemyBreakdown = onBlue ? match.score_breakdown.red : match.score_breakdown.blue;
+                const foulCount = breakdown.foulCount;
+                const techFoulCount = breakdown.techFoulCount;
+                const enemyFoulCount = enemyBreakdown.foulCount;
+                const enemyTechFoulCount = enemyBreakdown.techFoulCount;
+                scoreTD.innerText = (breakdown.total_points || breakdown.totalPoints) + "-" + (enemyBreakdown.total_points || enemyBreakdown.totalPoints);
+                allianceFoulTD.innerText = foulCount === 0 ? "" : "" + foulCount;
+                allianceTechFoulTD.innerText = techFoulCount === 0 ? "" : "" + techFoulCount;
+                enemyFoulTD.innerText = enemyFoulCount === 0 ? "" : "" + enemyFoulCount;
+                enemyTechFoulTD.innerText = enemyTechFoulCount === 0 ? "" : "" + enemyTechFoulCount;
             }
+            extraTD.innerText = robotRanking.getExtraMatchInfo(match);
 
-            playedMatchDisplays.push('<a onclick=onMatchClick("' + key + '")>' + key + "</a>    " + getTeamsDisplay(match, teamNumber) + " | " + outcomeString + " " + breakdownString);
+            row.appendChild(keyTD);
+            row.appendChild(colorTD);
+            row.appendChild(allianceTD);
+            row.appendChild(enemyTD);
+            row.appendChild(resultTD);
+            row.appendChild(scoreTD);
+            row.appendChild(allianceFoulTD);
+            row.appendChild(allianceTechFoulTD);
+            row.appendChild(enemyFoulTD);
+            row.appendChild(enemyTechFoulTD);
+            row.appendChild(extraTD);
+            latestMatchesTable.appendChild(row);
         }
-        const unplayedMatchDisplays = [];
+        const upcomingMatchesTable = document.getElementById("upcoming_matches");
         for(const match of unplayedMatches){
-            const key = match.key;
-            unplayedMatchDisplays.push('<a onclick=onMatchClick("' + key + '")>' + key + "</a>    " + getTeamsDisplay(match, teamNumber));
+            const row = document.createElement("tr");
+            const basicTDElements = getBasicMatchTDElements(match, robotRanking);
+            const keyTD = basicTDElements[0];
+            const colorTD = basicTDElements[1];
+            const allianceTD = basicTDElements[2];
+            const enemyTD = basicTDElements[3];
+            row.appendChild(keyTD);
+            row.appendChild(colorTD);
+            row.appendChild(allianceTD);
+            row.appendChild(enemyTD);
+            upcomingMatchesTable.appendChild(row);
         }
-        setIdHtml("latest_matches", playedMatchDisplays.length === 0 ? "None!" : playedMatchDisplays.join("<br/>"));
-        setIdHtml("upcoming_matches", unplayedMatchDisplays.length === 0 ? "None!" : unplayedMatchDisplays.join("<br/>"))
     }, function(){
         console.error("Was unable to get matches.");
     });
@@ -275,7 +326,5 @@ function disableWebsite(){
 
     setTagsTextToNull();
     setIdText("additional_team_data", null);
-    setIdText("latest_matches", null);
-    setIdText("upcoming_matches", null);
     updateTeamData()
 })();

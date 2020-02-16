@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
 <html>
     <head>
         <link rel="stylesheet" type="text/css" href="../global.css"/>
@@ -34,9 +36,31 @@
 
         <hr/>
         <h1>Latest Matches:</h1>
-        <p class="centered"><span id="latest_matches">ERROR</span></p>
+<!--        <p class="centered"><span id="latest_matches">ERROR</span></p>-->
+        <table id="latest_matches" class="simple_table">
+            <tr>
+                <th>Match</th>
+                <th>Color</th>
+                <th>Alliance</th>
+                <th>Enemy</th>
+                <th>Result</th>
+                <th>Score</th>
+                <th>F Commit</th>
+                <th>TF Commit</th>
+                <th>F Earned</th>
+                <th>TF Earned</th>
+                <th>Extra Info</th>
+            </tr>
+        </table>
         <h1>Upcoming Matches:</h1>
-        <p class="centered"><span id="upcoming_matches">ERROR</span></p>
+        <table id="upcoming_matches" class="simple_table">
+            <tr>
+                <th>Match</th>
+                <th>Color</th>
+                <th>Alliance</th>
+                <th>Enemy</th>
+            </tr>
+        </table>
 
         <script src="index.js"></script>
     </body>

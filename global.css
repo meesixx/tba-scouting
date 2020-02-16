@@ -81,3 +81,31 @@ a.disable{
     background-color: rgba(0,0,0, .3);
     border-bottom: none;
 }
+
+
+
+.simple_table {
+    border-collapse: collapse;
+}
+.simple_table th{
+    border: solid 1px #FFFFFF;
+    height: 50px;
+}
+.simple_table td{
+    border: solid 1px #FFFFFF;
+    padding: 5px;
+}
+.simple_table th{
+    padding: 5px;
+}
+.simple_table tr:nth-child(even){
+    background-color: rgba(100%, 100%, 100%, .1);
+}
+.simple_table tr:hover{
+    background-color: rgba(100%, 100%, 100%, .4);
+    color: #878787;
+}
+
+.simple_table{
+    width: 100%;
+}

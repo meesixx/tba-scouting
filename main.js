@@ -544,6 +544,9 @@ class RobotRanking extends Object {
     rank(){
         return [this.totalWins, [], []];
     }
+    getExtraMatchInfo(match) {
+        return "";
+    }
 
     isRobotBlue(match){
         return match.alliances.blue.team_keys.includes(this.teamKey);
@@ -1120,6 +1123,10 @@ class RobotRanking2019 extends RobotRanking {
 class RobotRanking2020 extends RobotRanking {
     constructor(teamNumber, matches, unplayedMatches) {
         super(teamNumber, matches, unplayedMatches);
+
+        this.initLineExitCount = 0;
+        this.initLineNoneCount = 0;
+
         this.endgameNone = 0;
         this.endgamePark = 0;
         this.endgameHang = 0;
@@ -1133,18 +1140,37 @@ class RobotRanking2020 extends RobotRanking {
         this.tripleLevelHangs = 0;
         this.tripleNotLevelHangs = 0;
 
+        this.endgameNoneWithNoHangs = 0;
+
         for(const match of matches){
             if(match.score_breakdown === null){
                 continue;
             }
             const isOnBlue = this.isRobotBlue(match);
-            const teamBreakdown = (isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red);
+            const teamBreakdown = isOnBlue ? match.score_breakdown.blue : match.score_breakdown.red;
             const robotNumber = this.getRobotNumber(match);
             const initLine = teamBreakdown["initLineRobot" + robotNumber]; // Unknown, None, Exited
+            switch(initLine){
+                case "None":
+                    this.initLineNoneCount++;
+                    break;
+                case "Exited":
+                    this.initLineExitCount++;
+                    break;
+                case "Unknown":
+                    break;
+                default:
+                    console.log("Unknown init line: " + initLine);
+                    break;
+            }
             const endgame = teamBreakdown["endgameRobot" + robotNumber]; // Unknown, None, Park, Hang
+            const numberOfHangs = teamBreakdown.tba_numRobotsHanging;
             switch(endgame) {
                 case "None":
                     this.endgameNone++;
+                    if(numberOfHangs === 0){
+                        this.endgameNoneWithNoHangs++;
+                    }
                     break;
                 case "Park":
                     this.endgamePark++;
@@ -1155,9 +1181,23 @@ class RobotRanking2020 extends RobotRanking {
                     switch(levelEnum){
                         case "IsLevel":
                             this.levelHangs++;
+                            if(numberOfHangs === 1){
+                                this.singleLevelHangs++;
+                            } else if(numberOfHangs === 2){
+                                this.doubleLevelHangs++;
+                            } else if(numberOfHangs === 3){
+                                this.tripleLevelHangs++;
+                            }
                             break;
                         case "NotLevel":
                             this.notLevelHangs++;
+                            if(numberOfHangs === 1){
+                                this.singleNotLevelHangs++;
+                            } else if(numberOfHangs === 2){
+                                this.doubleNotLevelHangs++;
+                            } else if(numberOfHangs === 3){
+                                this.tripleNotLevelHangs++;
+                            }
                             break;
                         case "Unknown":
                             console.log("Rung Is Level is unknown when this robot climbed...");
@@ -1175,6 +1215,54 @@ class RobotRanking2020 extends RobotRanking {
             }
         }
     }
+    getExtraMatchInfo(match) {
+        const matchScoreBreakdown = match.score_breakdown;
+        if(matchScoreBreakdown === null){
+            return super.getExtraMatchInfo(match);
+        }
+        const breakdown = this.isRobotBlue(match) ? match.score_breakdown.blue : match.score_breakdown.red;
+        const number = this.getRobotNumber(match);
+        const initLine = breakdown["initLineRobot" + number];
+        const endgame = breakdown["endgameRobot" + number];
+        return "Init: " + initLine + " | Endgame: " + endgame;
+    }
+    rank() {
+        const cool = [];
+        const special = [];
+
+        let r = 0;
+        r += this.rankingPointsTotal / 10.0;
+
+        const totalInitLine = this.initLineNoneCount + this.initLineExitCount;
+        if(totalInitLine !== 0){
+            r -= this.initLineNoneCount / totalInitLine * 3.0;
+        }
+
+        const totalEndgames = this.endgameNone + this.endgamePark + this.endgameHang;
+
+        if(totalEndgames !== 0){
+            r -= this.endgameNoneWithNoHangs / totalEndgames * 5.0;
+
+            const endgameHangPercent = this.endgameHang / totalEndgames;
+            r += 15 * endgameHangPercent;
+            if(endgameHangPercent > .7){
+                special.push("Reliable Hang");
+            } else if(endgameHangPercent > .45){
+                cool.push("Good Hang")
+            } else if(endgameHangPercent > .2){
+                cool.push("OK Hang")
+            }
+        }
+        return [r, cool, special]
+    }
+
+    getInitLineNoneString(){
+        return this.initLineNoneCount + "(" + prettyPercent(this.initLineNoneCount / (this.initLineNoneCount + this.initLineExitCount)) + ")";
+    }
+    getInitLineExitString(){
+        return this.initLineExitCount + "(" + prettyPercent(this.initLineExitCount / (this.initLineNoneCount + this.initLineExitCount)) + ")";
+    }
+
     getEndgameHangString(){
         return this.endgameHang + "(" + prettyPercent(this.endgameHang / (this.endgameNone + this.endgamePark + this.endgameHang)) + ")";
     }
