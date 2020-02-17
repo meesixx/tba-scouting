@@ -1142,6 +1142,14 @@ class RobotRanking2020 extends RobotRanking {
 
         this.endgameNoneWithNoHangs = 0;
 
+        this.autoBottomTotal = 0;
+        this.autoOuterTotal = 0;
+        this.autoInnerTotal = 0;
+
+        this.teleopBottomTotal = 0;
+        this.teleopOuterTotal = 0;
+        this.teleopInnerTotal = 0;
+
         for(const match of matches){
             if(match.score_breakdown === null){
                 continue;
@@ -1156,6 +1164,10 @@ class RobotRanking2020 extends RobotRanking {
                     break;
                 case "Exited":
                     this.initLineExitCount++;
+                    // only give them credit if they actually move
+                    this.autoBottomTotal += teamBreakdown.autoCellsBottom;
+                    this.autoOuterTotal += teamBreakdown.autoCellsOuter;
+                    this.autoInnerTotal += teamBreakdown.autoCellsInner;
                     break;
                 case "Unknown":
                     break;
@@ -1163,6 +1175,10 @@ class RobotRanking2020 extends RobotRanking {
                     console.log("Unknown init line: " + initLine);
                     break;
             }
+            this.teleopBottomTotal += teamBreakdown.teleopCellsBottom;
+            this.teleopOuterTotal += teamBreakdown.teleopCellsOuter;
+            this.teleopInnerTotal += teamBreakdown.teleopCellsInner;
+
             const endgame = teamBreakdown["endgameRobot" + robotNumber]; // Unknown, None, Park, Hang
             const numberOfHangs = teamBreakdown.tba_numRobotsHanging;
             switch(endgame) {
@@ -1244,15 +1260,56 @@ class RobotRanking2020 extends RobotRanking {
             r -= this.endgameNoneWithNoHangs / totalEndgames * 5.0;
 
             const endgameHangPercent = this.endgameHang / totalEndgames;
-            r += 15 * endgameHangPercent;
+            r += 12 * endgameHangPercent;
             if(endgameHangPercent > .7){
                 special.push("Reliable Hang");
             } else if(endgameHangPercent > .45){
-                cool.push("Good Hang")
+                cool.push("Good Hang");
             } else if(endgameHangPercent > .2){
-                cool.push("OK Hang")
+                cool.push("OK Hang");
             }
         }
+
+        if(this.countableMatches > 0){
+            const autoBottomAverage = this.autoBottomTotal / this.countableMatches;
+            const autoUpperAverage = (this.autoOuterTotal + this.autoInnerTotal) / this.countableMatches;
+            if(autoBottomAverage > 2.5){
+                r += 3;
+                cool.push("Reliable Bottom Auto");
+            } else if(autoBottomAverage > 2.0){
+                r += 2;
+                cool.push("Bottom Auto");
+            }
+            if(autoUpperAverage >= 4.7){
+                r += 7;
+                special.push("5 Ball Upper Auto");
+            } else if(autoUpperAverage >= 3.0){
+                r += 5;
+                cool.push("Reliable Upper Auto")
+            }else if(autoUpperAverage >= 2.7){
+                r += 4;
+                cool.push("Upper Auto");
+            }
+            const teleopBottomAverage = this.teleopBottomTotal / this.countableMatches;
+            const teleopUpperAverage = (this.teleopOuterTotal + this.teleopInnerTotal) / this.countableMatches;
+            r += teleopBottomAverage * 1.1;
+            r += teleopUpperAverage * 2.0;
+            if(teleopBottomAverage > 25){
+                special.push("Super Bottom");
+            } else if(teleopBottomAverage > 20){
+                cool.push("Good Bottom");
+            } else if(teleopBottomAverage > 15){
+                cool.push("Decent Bottom");
+            }
+            if(teleopUpperAverage > 30){
+                special.push("Super Upper");
+            } else if(teleopUpperAverage > 20){
+                cool.push("Good Upper");
+            } else if(teleopUpperAverage > 15){
+                cool.push("Decent Upper");
+            }
+        }
+
         return [r, cool, special]
     }
 
