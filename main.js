@@ -1240,7 +1240,7 @@ class RobotRanking2020 extends RobotRanking {
         const number = this.getRobotNumber(match);
         const initLine = breakdown["initLineRobot" + number];
         const endgame = breakdown["endgameRobot" + number];
-        return "Init: " + initLine + " | Endgame: " + endgame;
+        return "Init: " + initLine + " | Endgame: " + endgame + " | Hang Total: " + breakdown["tba_numRobotsHanging"];
     }
     rank() {
         const cool = [];
@@ -1280,7 +1280,10 @@ class RobotRanking2020 extends RobotRanking {
                 r += 2;
                 cool.push("Bottom Auto");
             }
-            if(autoUpperAverage >= 4.7){
+            if(autoUpperAverage > 5.1){
+                r += 8;
+                special.push("Reliable 5 Ball Upper Auto")
+            } else if(autoUpperAverage >= 4.7){
                 r += 7;
                 special.push("5 Ball Upper Auto");
             } else if(autoUpperAverage >= 3.0){
@@ -1294,18 +1297,22 @@ class RobotRanking2020 extends RobotRanking {
             const teleopUpperAverage = (this.teleopOuterTotal + this.teleopInnerTotal) / this.countableMatches;
             r += teleopBottomAverage * 1.1;
             r += teleopUpperAverage * 2.0;
-            if(teleopBottomAverage > 25){
-                special.push("Super Bottom");
-            } else if(teleopBottomAverage > 20){
-                cool.push("Good Bottom");
+            if(teleopBottomAverage > 20){
+                special.push("Holy Crap! Bottom");
             } else if(teleopBottomAverage > 15){
+                special.push("Super Bottom");
+            } else if(teleopBottomAverage > 8){
+                cool.push("Good Bottom");
+            } else if(teleopBottomAverage > 5){
                 cool.push("Decent Bottom");
+            } else if(teleopBottomAverage >= 3){
+                cool.push("Can Do Bottom")
             }
-            if(teleopUpperAverage > 30){
+            if(teleopUpperAverage > 20){
                 special.push("Super Upper");
-            } else if(teleopUpperAverage > 20){
+            } else if(teleopUpperAverage > 12){
                 cool.push("Good Upper");
-            } else if(teleopUpperAverage > 15){
+            } else if(teleopUpperAverage > 7){
                 cool.push("Decent Upper");
             }
         }
@@ -1328,5 +1335,8 @@ class RobotRanking2020 extends RobotRanking {
     }
     getEndgameNoneString(){
         return this.endgameNone + "(" + prettyPercent(this.endgameNone / (this.endgameNone + this.endgamePark + this.endgameHang)) + ")";
+    }
+    getEndgameNoneWithNoHangsString() {
+        return this.endgameNoneWithNoHangs + "(" + prettyPercent(this.endgameNoneWithNoHangs / this.endgameNone) + ")";
     }
 }

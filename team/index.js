@@ -184,7 +184,7 @@ function updateTeamData(){
                     "",
                     "Endgame Hang: " + robotRanking.getEndgameHangString(),
                     "Endgame Park: " + robotRanking.getEndgameParkString(),
-                    "Endgame None: " + robotRanking.getEndgameNoneString(),
+                    "Endgame None: " + robotRanking.getEndgameNoneString() + " (" + robotRanking.getEndgameNoneWithNoHangsString() + " with no hangs)",
             );
         }
         dataArray.push(
