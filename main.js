@@ -1261,7 +1261,9 @@ class RobotRanking2020 extends RobotRanking {
 
             const endgameHangPercent = this.endgameHang / totalEndgames;
             r += 12 * endgameHangPercent;
-            if(endgameHangPercent > .7){
+            if(endgameHangPercent > .9){
+                special.push("Very Reliable Hang");
+            } else if(endgameHangPercent > .7){
                 special.push("Reliable Hang");
             } else if(endgameHangPercent > .45){
                 cool.push("Good Hang");
@@ -1280,7 +1282,13 @@ class RobotRanking2020 extends RobotRanking {
                 r += 2;
                 cool.push("Bottom Auto");
             }
-            if(autoUpperAverage > 5.1){
+            if(autoUpperAverage > 10){
+                r += 9;
+                special.push("10 Ball Upper Auto")
+            } if(autoUpperAverage > 7){
+                r += 8.5;
+                special.push("7 Ball Upper Auto")
+            } else if(autoUpperAverage > 5.1){
                 r += 8;
                 special.push("Reliable 5 Ball Upper Auto")
             } else if(autoUpperAverage >= 4.7){
@@ -1308,7 +1316,11 @@ class RobotRanking2020 extends RobotRanking {
             } else if(teleopBottomAverage >= 3){
                 cool.push("Can Do Bottom")
             }
-            if(teleopUpperAverage > 20){
+            if(teleopUpperAverage > 30){
+                special.push("Holy Crap! Upper");
+            } else if(teleopUpperAverage > 25){
+                special.push("Super Duper Upper");
+            } else if(teleopUpperAverage > 20){
                 special.push("Super Upper");
             } else if(teleopUpperAverage > 12){
                 cool.push("Good Upper");
