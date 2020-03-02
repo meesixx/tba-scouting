@@ -1285,7 +1285,7 @@ class RobotRanking2020 extends RobotRanking {
             if(autoUpperAverage > 10){
                 r += 9;
                 special.push("10 Ball Upper Auto")
-            } if(autoUpperAverage > 7){
+            } else if(autoUpperAverage > 7){
                 r += 8.5;
                 special.push("7 Ball Upper Auto")
             } else if(autoUpperAverage > 5.1){
