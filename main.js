@@ -1374,6 +1374,12 @@ class RobotRanking2022 extends RobotRanking {
         this.autonomousMoved = 0;
         this.autonomousStill = 0;
 
+        this.autoCargoLowerTotal = 0;
+        this.autoCargoUpperTotal = 0;
+        this.teleopCargoLowerTotal = 0;
+        this.teleopCargoUpperTotal = 0;
+        this.totalBreakdownCount = 0;
+
         for (const match of matches) {
             const endgame = this.getEndgame(match);
             switch (endgame) {
@@ -1404,6 +1410,15 @@ class RobotRanking2022 extends RobotRanking {
                 } else {
                     this.autonomousStill++;
                 }
+            }
+            const matchScoreBreakdown = match.score_breakdown;
+            if(matchScoreBreakdown !== null){
+                this.totalBreakdownCount++;
+                const breakdown = this.isRobotBlue(match) ? match.score_breakdown.blue : match.score_breakdown.red;
+                this.autoCargoLowerTotal += breakdown.autoCargoLowerBlue + breakdown.autoCargoLowerFar + breakdown.autoCargoLowerNear + breakdown.autoCargoLowerRed;
+                this.autoCargoUpperTotal += breakdown.autoCargoUpperBlue + breakdown.autoCargoUpperFar + breakdown.autoCargoUpperNear + breakdown.autoCargoUpperRed;
+                this.teleopCargoLowerTotal += breakdown.teleopCargoLowerBlue + breakdown.teleopCargoLowerFar + breakdown.teleopCargoLowerNear + breakdown.teleopCargoLowerRed;
+                this.teleopCargoUpperTotal += breakdown.teleopCargoUpperBlue + breakdown.teleopCargoUpperFar + breakdown.teleopCargoUpperNear + breakdown.teleopCargoUpperRed;
             }
         }
     }
@@ -1443,30 +1458,23 @@ class RobotRanking2022 extends RobotRanking {
             const nonePercent = this.endgameNoneCount / totalEndgameCount;
             const anyPercent = 1.0 - nonePercent;
 
+            r += Math.max(traversalPercent * 14, highPercent * 11, midPercent * 7, anyPercent * 4);
             if (traversalPercent >= 0.75) {
                 special.push(prettyPercent(traversalPercent) + " traversal")
-                r += 10;
             } else if (highPercent >= 0.75) {
                 special.push(prettyPercent(highPercent) + " high or above")
-                r += 8;
             } else if (midPercent >= 0.75) {
                 special.push(prettyPercent(midPercent) + " mid or above")
-                r += 5.5;
             } else if (anyPercent >= 0.75) {
                 special.push(prettyPercent(midPercent) + " low or above")
-                r += 3;
-            } else if (traversalPercent >= 0) {
+            } else if (traversalPercent > 0) {
                 cool.push(prettyPercent(traversalPercent) + " traversal")
-                r += 3;
-            } else if (highPercent >= 0) {
+            } else if (highPercent > 0) {
                 cool.push(prettyPercent(highPercent) + " high or above")
-                r += 3;
             } else if (midPercent >= 0.25) {
                 cool.push(prettyPercent(midPercent) + " mid or above")
-                r += 3;
             } else if (anyPercent >= 0.25) {
                 cool.push(prettyPercent(midPercent) + " low or above")
-                r += 3;
             }
         }
         const totalAutonomousCount = this.autonomousMoved + this.autonomousStill;
@@ -1479,7 +1487,53 @@ class RobotRanking2022 extends RobotRanking {
                 cool.push("Sometimes moves in auto")
                 r += 1;
             } else if (movePercent <= 0.25) {
-                r -= 3;
+                r -= 4;
+            }
+        }
+        if (this.totalBreakdownCount > 0) {
+            const averageLowerAutoCount = this.autoCargoLowerTotal / this.totalBreakdownCount;
+            const averageUpperAutoCount = this.autoCargoUpperTotal / this.totalBreakdownCount;
+
+            if (averageLowerAutoCount > 3.0) {
+                r += 3;
+                cool.push("Reliable low auto")
+            } else if (averageLowerAutoCount >= 1.0) {
+                r += 1.5;
+                cool.push("Low auto")
+            }
+
+            if (averageUpperAutoCount >= 3.5) {
+                r += 6;
+                special.push("Amazing upper auto")
+            } else if (averageUpperAutoCount >= 2.0) {
+                r += 4;
+                cool.push("Upper auto")
+            } else if (averageUpperAutoCount >= 1.1) {
+                r += 2;
+                cool.push("Sometimes upper auto")
+            }
+
+            const averageLowerTeleopCount = this.teleopCargoLowerTotal / this.totalBreakdownCount;
+            const averageUpperTeleopCount = this.teleopCargoUpperTotal / this.totalBreakdownCount;
+
+            if (averageUpperTeleopCount >= 18.0) {
+                special.push("Amazing upper")
+                r += 8;
+            } else if (averageUpperTeleopCount >= 16.0) {
+                special.push("Great upper")
+                r += 6;
+            } else {
+                const teleopScoreTotal = averageLowerTeleopCount + averageUpperTeleopCount;
+                if (teleopScoreTotal >= 18.0) {
+                    special.push("Amazing low");
+                    r += 4.2;
+                } else if (teleopScoreTotal >= 14.0) {
+                    cool.push("Good low");
+                    r += 3.8;
+                } else if (averageUpperTeleopCount >= 10.0) {
+                    cool.push("Upper");
+                    r += 3.5;
+                }
             }
         }
 
