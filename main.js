@@ -367,8 +367,10 @@ function createRobotRanking(year, teamNumber, matches){
             return new RobotRanking2018(teamNumber, filteredMatches, unplayedMatches);
         case 2019:
             return new RobotRanking2019(teamNumber, filteredMatches, unplayedMatches);
-        case 2020:
+        case 2020: case 2021:
             return new RobotRanking2020(teamNumber, filteredMatches, unplayedMatches);
+        case 2022:
+            return new RobotRanking2022(teamNumber, filteredMatches, unplayedMatches);
     }
     return new RobotRanking(teamNumber, filteredMatches, unplayedMatches);
 }
@@ -1350,5 +1352,137 @@ class RobotRanking2020 extends RobotRanking {
     }
     getEndgameNoneWithNoHangsString() {
         return this.endgameNoneWithNoHangs + "(" + prettyPercent(this.endgameNoneWithNoHangs / this.endgameNone) + ")";
+    }
+}
+
+const ENDGAME_TRAVERSAL = "Traversal";
+const ENDGAME_HIGH = "High";
+const ENDGAME_MID = "Mid";
+const ENDGAME_LOW = "Low";
+const ENDGAME_NONE = "None";
+
+class RobotRanking2022 extends RobotRanking {
+
+    constructor(teamNumber, matches, unplayedMatches) {
+        super(teamNumber, matches, unplayedMatches);
+        this.endgameTraversalCount = 0;
+        this.endgameHighCount = 0;
+        this.endgameMidCount = 0;
+        this.endgameLowCount = 0;
+        this.endgameNoneCount = 0;
+
+        this.autonomousMoved = 0;
+        this.autonomousStill = 0;
+
+        for (const match of matches) {
+            const endgame = this.getEndgame(match);
+            switch (endgame) {
+                case ENDGAME_TRAVERSAL:
+                    this.endgameTraversalCount++;
+                    break;
+                case ENDGAME_HIGH:
+                    this.endgameHighCount++;
+                    break;
+                case ENDGAME_MID:
+                    this.endgameMidCount++;
+                    break;
+                case ENDGAME_LOW:
+                    this.endgameLowCount++;
+                    break;
+                case ENDGAME_NONE:
+                    this.endgameNoneCount++;
+                    break;
+                case null:
+                    break;
+                default:
+                    throw "Unknown endgame: " + endgame;
+            }
+            const taxi = this.getTaxi(match);
+            if (taxi !== null) {
+                if (taxi) {
+                    this.autonomousMoved++;
+                } else {
+                    this.autonomousStill++;
+                }
+            }
+        }
+    }
+
+    getEndgame(match) {
+        const matchScoreBreakdown = match.score_breakdown;
+        if(matchScoreBreakdown === null){
+            return null;
+        }
+        const breakdown = this.isRobotBlue(match) ? match.score_breakdown.blue : match.score_breakdown.red;
+        const number = this.getRobotNumber(match);
+        return breakdown["endgameRobot" + number];
+    }
+    getTaxi(match) {
+        const matchScoreBreakdown = match.score_breakdown;
+        if(matchScoreBreakdown === null){
+            return null;
+        }
+        const breakdown = this.isRobotBlue(match) ? match.score_breakdown.blue : match.score_breakdown.red;
+        const number = this.getRobotNumber(match);
+        return breakdown["taxiRobot" + number] === "Yes";
+    }
+
+    rank() {
+        const cool = [];
+        const special = [];
+
+        let r = 0;
+        r += this.rankingPointsTotal / 10.0;
+
+        const totalEndgameCount = this.endgameTraversalCount + this.endgameHighCount + this.endgameMidCount + this.endgameLowCount + this.endgameNoneCount;
+
+        if (totalEndgameCount > 0) {
+            const traversalPercent = this.endgameTraversalCount / totalEndgameCount;
+            const highPercent = (this.endgameTraversalCount + this.endgameHighCount) / totalEndgameCount;
+            const midPercent = (this.endgameTraversalCount + this.endgameHighCount + this.endgameMidCount) / totalEndgameCount;
+            const nonePercent = this.endgameNoneCount / totalEndgameCount;
+            const anyPercent = 1.0 - nonePercent;
+
+            if (traversalPercent >= 0.75) {
+                special.push(prettyPercent(traversalPercent) + " traversal")
+                r += 10;
+            } else if (highPercent >= 0.75) {
+                special.push(prettyPercent(highPercent) + " high or above")
+                r += 8;
+            } else if (midPercent >= 0.75) {
+                special.push(prettyPercent(midPercent) + " mid or above")
+                r += 5.5;
+            } else if (anyPercent >= 0.75) {
+                special.push(prettyPercent(midPercent) + " low or above")
+                r += 3;
+            } else if (traversalPercent >= 0) {
+                cool.push(prettyPercent(traversalPercent) + " traversal")
+                r += 3;
+            } else if (highPercent >= 0) {
+                cool.push(prettyPercent(highPercent) + " high or above")
+                r += 3;
+            } else if (midPercent >= 0.25) {
+                cool.push(prettyPercent(midPercent) + " mid or above")
+                r += 3;
+            } else if (anyPercent >= 0.25) {
+                cool.push(prettyPercent(midPercent) + " low or above")
+                r += 3;
+            }
+        }
+        const totalAutonomousCount = this.autonomousMoved + this.autonomousStill;
+        if (totalAutonomousCount > 0) {
+            const movePercent = this.autonomousMoved / totalAutonomousCount;
+            if (movePercent >= 0.8) {
+                cool.push("Moves in auto")
+                r += 3;
+            } else if (movePercent >= 0.6) {
+                cool.push("Sometimes moves in auto")
+                r += 1;
+            } else if (movePercent <= 0.25) {
+                r -= 3;
+            }
+        }
+
+        return [r, cool, special]
     }
 }
