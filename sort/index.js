@@ -88,7 +88,7 @@ function onTeamClick(teamNumber){
                 row.appendChild(rankTD);
                 row.appendChild(teamTD);
                 row.appendChild(recordTD);
-                row.appendChild(teleopTD);
+                row.appendChild(prettyDecimal(robotRanking.totalPointsTotal / robotRanking.countableMatches));
                 row.appendChild(customRankTD);
                 row.appendChild(coolTD);
                 row.appendChild(extraTD);
