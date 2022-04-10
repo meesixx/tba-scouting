@@ -105,10 +105,10 @@ a.disable{
     padding: 5px;
 }
 .simple_table tr:nth-child(even){
-    background-color: rgba(100%, 100%, 100%, .1);
+    background-color: #f9ab0a42;
 }
 .simple_table tr:hover{
-    background-color: rgba(100%, 100%, 100%, .4);
+    background-color:#f9ab0a; 
     color: #878787;
 }
 
