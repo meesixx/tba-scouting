@@ -1,7 +1,9 @@
 html, body{
-    background-color: #3bb7ff;
+    background-color: #000000;
     color: #FFFFFF;
     margin: 0;
+    font-family: steamfnt;
+
 }
 hr{
     background-color: transparent;
@@ -15,7 +17,10 @@ a.disable{
     pointer-events: none;
     cursor: default;
 }
-
+@font-face {
+    font-family: steamfnt;
+    src: url(airstrike.ttf);
+  }
 /* The classes defined here are usually for setting innerText and to keep track of them. */
 .current_team_number{ }
 .current_year{ }
@@ -46,10 +51,11 @@ a.disable{
 
 #team_number_input, #event_code_input, #year_input{
     height: 80px;
-    background-color: rgba(100%, 100%, 100%, .2);
+    background-color: rgb(0, 0, 0);
     font-size: 60px;
+    font-family: steamfnt;
     text-align: center;
-    color: #ff5238;
+    color: #f9ab0a;
 }
 #team_number_input, #year_input{
     width: 200px;
@@ -71,7 +77,7 @@ a.disable{
 }
 #nav_table th:not(.current_nav){
     border-bottom: solid 1px #FFFFFF;
-    background-color: rgba(0,0,0, .2);
+    background-color: #f9ab0a;
     cursor: pointer;
 }
 #nav_table th:hover{

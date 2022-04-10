@@ -60,7 +60,7 @@ function updateTeamData(){
     const authKey = requestAuthKey();
     const year = getDesiredYear();
     console.log("Updating data for : " + teamNumber);
-    const codeGithub = "https://github.com/retrodaredevil/frc-code-database/tree/master/frc/" + teamNumber;
+    const codeGithub = "https://www.youtube.com/watch?v=xvFZjo5PgG0";
     for (const link of document.getElementsByClassName("database_github")) {
         link.classList.remove("disable");
         link.href = codeGithub;
