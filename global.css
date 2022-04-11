@@ -19,7 +19,7 @@ a.disable{
 }
 @font-face {
     font-family: steamfnt;
-    src: url(airstrike.ttf);
+    src: url(Stark.OTF);
   }
 /* The classes defined here are usually for setting innerText and to keep track of them. */
 .current_team_number{ }
