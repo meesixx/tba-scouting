@@ -1458,7 +1458,7 @@ class RobotRanking2022 extends RobotRanking {
             const nonePercent = this.endgameNoneCount / totalEndgameCount;
             const anyPercent = 1.0 - nonePercent;
 
-            r += Math.max(traversalPercent * 14, highPercent * 11, midPercent * 7, anyPercent * 4);
+            //r += Math.max(traversalPercent * 14, highPercent * 11, midPercent * 7, anyPercent * 4);
             if (traversalPercent >= 0.75) {
                 special.push(prettyPercent(traversalPercent) + " traversal")
             } else if (highPercent >= 0.75) {
